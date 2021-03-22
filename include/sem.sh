@@ -110,12 +110,12 @@ sem_init() {
 	# If the semaphore is new, locking must succeed,
 	# otherwise it was not a new semaphore
 	if ! mutex_trylock "$mutex"; then
-		error "Could not acquire $mutex"
+		log_error "Could not acquire $mutex"
 		return 1
 	fi
 
 	if ! mutex_trylock "$owner"; then
-		error "Could not acquire $mutex"
+		log_error "Could not acquire $mutex"
 		err=1
 	elif ! echo "$value" > "$sem"; then
 		err=1
