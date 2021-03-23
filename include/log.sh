@@ -64,10 +64,18 @@ log_write() {
 
 	if (( $# > 2 )); then
 		for line in "${@:3}"; do
-			if ! date +"%F %T %z $prefix $line" >> "$__log_file"; then
-				echo "Could not write to $__log_file" 1>&2
+			local msg
+
+			if ! msg=$(date +"%F %T %z $prefix $line"); then
+				echo "Could not get timestamp" 1>&2
 				return 1
 			fi
+
+			if ! echo "$msg" >> "$__log_file"; then
+				echo "Could not write to $__log_file" 1>&2
+			fi
+
+			echo "$msg" 1>&2
 		done
 	else
 		while read -r line; do
