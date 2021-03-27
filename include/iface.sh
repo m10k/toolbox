@@ -26,7 +26,7 @@ iface_get_state() {
 		return 1
 	fi
 
-	if ! state=$(echo "$state" | grep -oP "state[ ]+\K[^ ]+"); then
+	if ! state=$(echo "$state" | grep -oP 'state[ ]+\K[^ ]+'); then
 		return 1
 	fi
 
@@ -76,8 +76,8 @@ iface_set_state() {
 }
 
 iface_get_address() {
-        local iface
-        local proto
+	local iface
+	local proto
 
         local addr_all
 
@@ -88,7 +88,7 @@ iface_get_address() {
                 return 1
         fi
 
-        if ! echo "$addr_all" | grep -oP "$proto[ \t]+\K[^ ]+"; then
+        if ! echo "$addr_all" | grep -oP "${proto}[ \\t]+\\K[^ ]+"; then
                 return 1
         fi
 
@@ -105,9 +105,51 @@ iface_get_essid() {
                 return 1
         fi
 
-        if ! echo "$addr_all" | grep -oP "$iface.*ESSID:\"\K[^\"]+"; then
+        if ! echo "$addr_all" | grep -oP "$iface.*ESSID:\"\\K[^\"]+"; then
                 return 1
         fi
 
         return 0
+}
+
+_iface_parse_iwlist() {
+	local regex_ssid='Cell [0-9]+ - Address: ([0-9A-Fa-f:]+)'
+	local regex_signal='Quality=([0-9/]+)'
+	local regex_essid='ESSID:"(.*)"'
+
+        local line
+        local ssid
+        local essid
+        local strength
+
+        while read -r line; do
+                if [[ "$line" =~ $regex_ssid ]]; then
+                        #start of a new network
+                        ssid="${BASH_REMATCH[1]}"
+                        essid=""
+                        strength=""
+                elif [[ "$line" =~ $regex_signal ]]; then
+                        strength="${BASH_REMATCH[1]}"
+                elif [[ "$line" =~ $regex_essid ]]; then
+                        essid="${BASH_REMATCH[1]}"
+                fi
+
+                if [ -n "$ssid" ] && [ -n "$essid" ] && [ -n "$strength" ]; then
+                        echo "$ssid $strength $essid"
+                fi
+        done
+}
+
+iface_scan() {
+	local iface
+	local raw
+
+	iface="$1"
+
+	if ! raw=$(iwlist "$iface" scan 2>&1); then
+		return 1
+	fi
+
+	echo "$raw" | _iface_parse_iwlist
+	return 0
 }
