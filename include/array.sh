@@ -21,3 +21,15 @@ array_contains() {
 
 	return 1
 }
+
+array_to_lines() {
+	local item
+
+	for item in "$@"; do
+		echo "$item"
+	done
+}
+
+array_sort() {
+	array_to_lines "$@" | sort -V
+}
