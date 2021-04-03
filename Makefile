@@ -1,7 +1,7 @@
 PHONY = install uninstall
 
 ifeq ($(PREFIX), )
-	PREFIX = /usr/local
+	PREFIX = /usr
 endif
 
 all:
