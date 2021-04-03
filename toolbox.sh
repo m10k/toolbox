@@ -6,65 +6,91 @@
 #
 
 __toolbox_init() {
-	export TOOLBOX_PATH="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
-	export TOOLBOX_HOME="$HOME/.toolbox"
+	local modpath
 
-	declare -ag __TOOLBOX_INCLUDED=()
+	if ! modpath="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"; then
+		echo "Could not determine toolbox path" 1>&2
+		return 1
+	fi
+
+	declare -gxr TOOLBOX_PATH="$modpath"
+	declare -gxr TOOLBOX_HOME="$HOME/.toolbox"
+	declare -axgr __TOOLBOX_MODULEPATH=(
+		"$TOOLBOX_HOME/include"
+		"$modpath/include"
+	)
+
+	declare -Axg __TOOLBOX_INCLUDED
 
 	return 0
 }
 
 have() {
-	local module
-	local included
+	local module="$1"
 
-	module="$1"
-
-	for included in "${__TOOLBOX_INCLUDED[@]}"; do
-		local modpath
-
-		modpath="$TOOLBOX_PATH/include/$module.sh"
-
-		if [[ "$included" == "$modpath" ]]; then
-			return 0
-		fi
-	done
+        if [[ -n "${__TOOLBOX_INCLUDED[$module]}" ]]; then
+		return 0
+	fi
 
 	return 1
 }
 
-include() {
+_try_include() {
+	local mod_name
+	local mod_path
 	local err
+
+	mod_name="$1"
+	mod_path="$2"
+
+	if ! . "$mod_path" &>/dev/null; then
+		return 1
+	fi
+
+	if ! __init; then
+		echo "ERROR: Could not initialize $module" 1>&2
+		err=1
+	else
+		__TOOLBOX_INCLUDED["$mod_name"]="$mod_path"
+		err=0
+	fi
+
+	unset -f __init
+
+	return "$err"
+}
+
+include() {
 	local module
 
-	err=0
-
 	for module in "$@"; do
-		local modpath
+		local searchpath
+		local loaded
 
 		if have "$module"; then
 			continue
 		fi
 
-		modpath="$TOOLBOX_PATH/include/$module.sh"
+		loaded=false
 
-		if ! . "$modpath"; then
-			echo "ERROR: Could not load $modpath" 1>&2
-			err=1
-			continue
+		for searchpath in "${__TOOLBOX_MODULEPATH[@]}"; do
+			local modpath
+
+			modpath="$searchpath/$module.sh"
+
+			if _try_include "$module" "$modpath"; then
+				loaded=true
+				break
+			fi
+		done
+
+		if ! "$loaded"; then
+			echo "ERROR: Could not include $module" 1>&2
+			return 1
 		fi
-
-		if ! __init; then
-			echo "ERROR: Could not initialize $module" 1>&2
-			err=1
-		else
-			__TOOLBOX_INCLUDED+=("$modpath")
-		fi
-
-		unset -f __init
 	done
 
-	return "$err"
+	return 0
 }
 
 {
