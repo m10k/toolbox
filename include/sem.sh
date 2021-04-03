@@ -10,7 +10,7 @@ __init() {
 		return 1
 	fi
 
-	declare -gr __sem_path="$TOOLBOX_HOME/sem"
+	declare -xgr __sem_path="$TOOLBOX_HOME/sem"
 
 	return 0
 }

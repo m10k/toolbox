@@ -1,7 +1,7 @@
 #!/bin/bash
 
 __init() {
-	declare -gr __acpi_ac_path="/sys/class/power_supply"
+	declare -xgr __acpi_ac_path="/sys/class/power_supply"
 
 	return 0
 }
