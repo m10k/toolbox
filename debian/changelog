@@ -1,3 +1,17 @@
+toolbox (0.2-1) unstable; urgency=medium
+
+  * Allow modules to be included from TOOLBOX_HOME
+  * Move iface module to net group
+  * New modules:
+    - array: Convenience functions for arrays
+    - is: Convenience functions for string validation
+    - opt: Commandline parser
+    - xrandr: X monitor handling
+    - clip: X clipboard functions
+
+ -- Matthias Kruk <m@m10k.eu>  Sun, Apr 04 2021 07:40:55 +0900
+
+
 toolbox (0.1-1) unstable; urgency=medium
 
   * Initial release
