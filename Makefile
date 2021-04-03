@@ -17,7 +17,7 @@ install:
 	find $(DESTDIR)/$(PREFIX)/share/toolbox -type d -exec chmod 755 {} \;
 	find $(DESTDIR)/$(PREFIX)/share/toolbox -type f -exec chmod 644 {} \;
 	chmod -R 755 $(DESTDIR)/$(PREFIX)/share/toolbox
-	ln -sf $(DESTDIR)/$(PREFIX)/share/toolbox/toolbox.sh $(DESTDIR)/$(PREFIX)/bin/toolbox.sh
+	ln -sf $(PREFIX)/share/toolbox/toolbox.sh $(DESTDIR)/$(PREFIX)/bin/toolbox.sh
 
 uninstall:
 	rm $(DESTDIR)/$(PREFIX)/bin/toolbox.sh
