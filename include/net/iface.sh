@@ -136,6 +136,7 @@ _net_iface_parse_iwlist() {
 
                 if [ -n "$ssid" ] && [ -n "$essid" ] && [ -n "$strength" ]; then
                         echo "$ssid $strength $essid"
+			ssid=""
                 fi
         done
 }
