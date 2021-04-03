@@ -5,16 +5,15 @@ Build-Depends: debhelper (>= 9)
 Standards-Version: 3.9.8
 Section: shells
 Homepage: https://m10k.eu/toolbox
-Architecture: any
-Depends: bash (>= 4.0)
 Description: Module management for bash scripts
  Provides the necessary infrastructure to use loadable modules
  in shell scripts, and a set of basic modules for common tasks.
 
+
 Package: toolbox
 Section: shells
-Architecture: any
-Depends: ${misc:Depends}
+Architecture: all
+Depends: bash (>= 4.0) ${misc:Depends}
 Description: Module management for bash scripts
  Provides the necessary infrastructure to use loadable modules
  in shell scripts, and a set of basic modules for common tasks.

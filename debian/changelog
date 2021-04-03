@@ -9,7 +9,7 @@ toolbox (0.2-1) unstable; urgency=medium
     - xrandr: X monitor handling
     - clip: X clipboard functions
 
- -- Matthias Kruk <m@m10k.eu>  Sun, Apr 04 2021 07:40:55 +0900
+ -- Matthias Kruk <m@m10k.eu>  Sun, 04 Apr 2021 07:40:55 +0900
 
 
 toolbox (0.1-1) unstable; urgency=medium
