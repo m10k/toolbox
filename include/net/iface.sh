@@ -4,7 +4,7 @@ __init() {
 	return 0
 }
 
-iface_exists() {
+net_iface_exists() {
 	local iface
 
 	iface="$1"
@@ -16,7 +16,7 @@ iface_exists() {
 	return 1
 }
 
-iface_get_state() {
+net_iface_get_state() {
 	local iface
 	local state
 
@@ -47,7 +47,7 @@ iface_get_state() {
 	return 0
 }
 
-iface_set_state() {
+net_iface_set_state() {
 	local iface
 	local state
 
@@ -75,7 +75,7 @@ iface_set_state() {
 	return 0
 }
 
-iface_get_address() {
+net_iface_get_address() {
 	local iface
 	local proto
 
@@ -95,7 +95,7 @@ iface_get_address() {
         return 0
 }
 
-iface_get_essid() {
+net_iface_get_essid() {
         local iface
         local addr_all
 
@@ -112,7 +112,7 @@ iface_get_essid() {
         return 0
 }
 
-_iface_parse_iwlist() {
+_net_iface_parse_iwlist() {
 	local regex_ssid='Cell [0-9]+ - Address: ([0-9A-Fa-f:]+)'
 	local regex_signal='Quality=([0-9/]+)'
 	local regex_essid='ESSID:"(.*)"'
@@ -140,7 +140,7 @@ _iface_parse_iwlist() {
         done
 }
 
-iface_scan() {
+net_iface_scan() {
 	local iface
 	local raw
 
