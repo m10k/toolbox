@@ -2,17 +2,11 @@
 
 __init() {
 	local script_name
-	local timestamp
 
 	script_name="${0##*/}"
 
 	if [[ -z "$script_name" ]]; then
 		echo "Could not determine script name" 1>&2
-		return 1
-	fi
-
-	if ! timestamp=$(date +"%Y-%m-%d.%H:%M"); then
-		echo "Could not make timestamp for the log name" 1>&2
 		return 1
 	fi
 
@@ -23,7 +17,7 @@ __init() {
 
 	declare -xgi __log_verbosity="$__log_warning"
 	declare -xgr __log_path="$TOOLBOX_HOME/log"
-	declare -xgr __log_file="$__log_path/$timestamp.$script_name.$$.log"
+	declare -xgr __log_file="$__log_path/$script_name.log"
 
 	if ! mkdir -p "$__log_path"; then
 		return 1
@@ -68,7 +62,7 @@ log_write() {
 		for line in "${@:3}"; do
 			local msg
 
-			if ! msg=$(date +"%F %T %z $prefix $line"); then
+			if ! msg=$(date +"%F %T %z $$ $prefix $line"); then
 				echo "Could not get timestamp" 1>&2
 				return 1
 			fi
