@@ -4,7 +4,9 @@ __init() {
 	local script_name
 	local timestamp
 
-	if ! script_name=$(basename "$BASH_ARGV0"); then
+	script_name="${0##*/}"
+
+	if [[ -z "$script_name" ]]; then
 		echo "Could not determine script name" 1>&2
 		return 1
 	fi
