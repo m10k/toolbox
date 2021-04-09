@@ -56,24 +56,67 @@ _ssh_proxy_ctrl_socket_name() {
 	return 0
 }
 
-ssh_tunnel_open() {
-	local tunnel_host
-	local tunnel_user
-	local remote_addr
-	local remote_port
-	local local_addr
-	local local_port
+_ssh_make_handle() {
+	local ctrlsock="$1"
+	local hostspec="$2"
 
-	tunnel_host="$1"
-	tunnel_user="$2"
-	remote_addr="$3"
-        remote_port="$4"
-	local_addr="$5"
-	local_port="$6"
+	local handle
+
+	if ! handle=$(base64 <<< "$ctrlsock" 2>/dev/null); then
+		return 1
+	fi
+
+	handle+=":"
+
+	if ! handle+=$(base64 <<< "$hostspec" 2>/dev/null); then
+		return 1
+	fi
+
+	echo "$handle"
+	return 0
+}
+
+_ssh_handle_get_ctrlsock() {
+	local handle="$1"
+
+	local ctrlsock
+
+	if ! ctrlsock=$(base64 -d <<< "${handle%%:*}" 2>/dev/null); then
+		return 1
+	fi
+
+	echo "$ctrlsock"
+	return 0
+}
+
+_ssh_handle_get_hostspec() {
+	local handle="$1"
+
+	local hostspec
+
+	if ! hostspec=$(base64 -d <<< "${handle##*:}" 2>/dev/null); then
+		return 1
+	fi
+
+	echo "$hostspec"
+	return 0
+}
+
+ssh_tunnel_open() {
+	local tunnel_host="$1"
+	local tunnel_user="$2"
+	local remote_addr="$3"
+	local remote_port="$4"
+	local local_addr="$5"
+	local local_port="$6"
 
 	local ctrl_sock
 	local addrspec
 	local sshtarget
+	local handle
+
+	addrspec="$local_addr:$local_port:$remote_addr:$remote_port"
+	sshtarget="$tunnel_user@$tunnel_host"
 
 	if ! ctrl_sock=$(_ssh_tunnel_ctrl_socket_name "$remote_addr" \
 						      "$remote_port" \
@@ -81,75 +124,63 @@ ssh_tunnel_open() {
 		return 1
 	fi
 
-	addrspec="$local_addr:$local_port:$remote_addr:$remote_port"
-	sshtarget="$tunnel_user@$tunnel_host"
+	if ! handle=$(_ssh_make_handle "$ctrl_sock" "$sshtarget"); then
+		return 1
+	fi
 
 	if ! ssh -M -S "$ctrl_sock" -fnNT -o "ExitOnForwardFailure=yes" \
 	     -L "$addrspec" "$sshtarget" > /dev/null; then
 		return 1
 	fi
 
-	echo "$ctrl_sock"
-	return 0
-}
-
-ssh_tunnel_close() {
-	local tunnel_host
-	local tunnel_user
-	local ctrl_sock
-
-	tunnel_host="$1"
-	tunnel_user="$2"
-	ctrl_sock="$3"
-
-	if ! ssh -S "$ctrl_sock" -O exit "$tunnel_user@$tunnel_host" &> /dev/null; then
-		return 1
-	fi
-
+	echo "$handle"
 	return 0
 }
 
 ssh_proxy_open() {
-	local proxy_host
-	local proxy_user
-	local local_addr
-	local local_port
+	local proxy_host="$1"
+	local proxy_user="$2"
+	local local_addr="$3"
+	local local_port="$4"
 
 	local ctrl_sock
 	local addrspec
 	local sshtarget
+	local handle
 
-	proxy_host="$1"
-	proxy_user="$2"
-	local_addr="$3"
-	local_port="$4"
+	addrspec="$local_addr:$local_port"
+	sshtarget="$proxy_user@$proxy_host"
 
 	if ! ctrl_sock=$(_ssh_proxy_ctrl_socket_name "$local_addr" "$local_port"); then
 		return 1
 	fi
 
-	addrspec="$local_addr:$local_port"
-	sshtarget="$proxy_user@$proxy_host"
+	if ! handle=$(_ssh_make_handle "$ctrl_sock" "$sshtarget"); then
+		return 1
+	fi
 
 	if ! ssh -M -S "$ctrl_sock" -fnNT -o "ExitOnForwardFailure=yes" \
 	     -D "$addrspec" "$sshtarget" > /dev/null; then
 		return 1
 	fi
 
-	echo "$ctrl_sock"
+	echo "$handle"
 	return 0
 }
 
-ssh_proxy_close() {
-	local proxy_host
-	local proxy_user
-	local ctrl_sock
+ssh_close() {
+	local handle="$1"
 
-	proxy_host="$1"
-	proxy_user="$2"
-	ctrl_sock="$3"
+	local ctrlsock
+	local hostspec
 
-	if ! ssh -S "$ctrl_sock" -O exit "$proxy_user@$proxy_host" &> /dev/null; then
+	if ! ctrlsock=$(_ssh_handle_get_ctrlsock "$handle") ||
+	   ! hostspec=$(_ssh_handle_get_hostspec "$handle"); then
+		log_error "Invalid handle"
+		return 1
+	fi
+
+	if ! ssh -S "$ctrlsock" -O exit "$hostspec" &> /dev/null; then
 		return 1
 	fi
 
