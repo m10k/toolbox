@@ -21,7 +21,11 @@ _sem_mutexpath() {
 
 	sem="$1"
 
-	echo "$__sem_path/$sem.mutex"
+	if [[ "$sem" == *"/"* ]]; then
+		echo "$sem.mutex"
+	else
+		echo "$__sem_path/$sem.mutex"
+	fi
 }
 
 _sem_ownerpath() {
@@ -29,7 +33,11 @@ _sem_ownerpath() {
 
 	sem="$1"
 
-	echo "$__sem_path/$sem.owner"
+	if [[ "$sem" == *"/"* ]]; then
+		echo "$sem.owner"
+	else
+		echo "$__sem_path/$sem.owner"
+	fi
 }
 
 _sem_sempath() {
@@ -37,7 +45,11 @@ _sem_sempath() {
 
 	sem="$1"
 
-	echo "$__sem_path/$sem"
+	if [[ "$sem" == *"/"* ]]; then
+		echo "$sem"
+	else
+		echo "$__sem_path/$sem"
+	fi
 }
 
 _sem_inc() {
@@ -103,7 +115,7 @@ sem_init() {
 		return 1
 	fi
 
-	if ! mkdir -p "$__sem_path"; then
+	if ! mkdir -p "${sem%/*}"; then
 		return 1
 	fi
 
@@ -163,7 +175,7 @@ sem_wait() {
 	sem=$(_sem_sempath "$name")
 	passed=0
 
-	while (( passed == 0)); do
+	while (( passed == 0 )); do
 		mutex_lock "$mutex"
 
 		if _sem_dec "$sem"; then
