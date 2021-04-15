@@ -236,3 +236,31 @@ sem_post() {
 
 	return "$err"
 }
+
+sem_peek() {
+	local name="$1"
+
+	local mutex
+	local sem
+	local value
+	local err
+
+	mutex=$(_sem_mutexpath "$name")
+	sem=$(_sem_sempath "$name")
+	err=false
+
+	mutex_lock "$mutex"
+
+	if ! value=$(<"$sem"); then
+		err=true
+	fi
+
+	mutex_unlock "$mutex"
+
+	if "$err"; then
+		return 1
+	fi
+
+	echo "$value"
+	return 0
+}
