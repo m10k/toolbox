@@ -46,6 +46,26 @@ log_get_verbosity() {
 	echo "$__log_verbosity"
 }
 
+log_increase_verbosity() {
+	local verb
+
+	verb=$(log_get_verbosity)
+	((verb++))
+	log_set_verbosity "$verb"
+
+	return 0
+}
+
+log_decrease_verbosity() {
+	local verb
+
+	verb=$(log_get_verbosity)
+	((verb--))
+	log_set_verbosity "$verb"
+
+	return 0
+}
+
 log_write() {
 	local level
 	local prefix
