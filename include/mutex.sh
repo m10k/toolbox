@@ -27,7 +27,7 @@ mutex_lock() {
 	lock="$1"
 
 	while ! mutex_trylock "$lock"; do
-		sleep 1
+		inotifywait -qq "${lock%/*}"
 	done
 
 	return 0
