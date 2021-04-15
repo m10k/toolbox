@@ -19,6 +19,13 @@ __init() {
 		    "Print this text" \
 		    opt_print_help
 
+	opt_add_arg "v" "verbose" "no" 0 \
+		    "Be more verbose" \
+		    log_increase_verbosity
+	opt_add_arg "w" "shush" "no" 0 \
+		    "Be less verbose" \
+		    log_decrease_verbosity
+
 	return 0
 }
 
