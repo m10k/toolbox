@@ -91,7 +91,8 @@ inst_stop() {
 
 	sem="$__inst_path/$pid"
 
-	if ! sem_post "$sem"; then
+	if ! sem_post "$sem" &> /dev/null; then
+		log_error "No such instance"
 		return 1
 	fi
 
