@@ -108,6 +108,8 @@ opt_parse() {
 	local opt
 	local i
 
+	declare -argx __opt_argv=("$@")
+
 	for (( i = 1; i <= $#; i++ )); do
 		local param
 		local long
@@ -167,5 +169,10 @@ opt_get() {
 	fi
 
 	echo "${__opt_value[$long]}"
+	return 0
+}
+
+opt_get_argv() {
+	echo "${__opt_argv[@]}"
 	return 0
 }
