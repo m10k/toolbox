@@ -1,3 +1,21 @@
+toolbox (0.3-1) unstable; urgency=medium
+
+  * New modules
+    - inst: Daemonization and instance management
+    - queue: thread-safe n:n IPC mechanism
+    - conf: Unsophisticated configuration handling
+  * Fixes
+    - Avoid busy-waiting in sem_wait()
+  * Improvements
+    - Use inotify to improve mutex performance
+    - Make --verbose/--shush default parameters
+    - Add sem_peek() function
+    - Remember parameters passed to opt_parse()
+    - Add opt_get_argv() function
+
+ -- Matthias Kruk <m@m10k.eu>  Sat, 17 Apr 2021 11:04:24 +0900
+
+
 toolbox (0.2-1) unstable; urgency=medium
 
   * Allow modules to be included from TOOLBOX_HOME
