@@ -173,16 +173,26 @@ sem_wait() {
 
 	mutex=$(_sem_mutexpath "$name")
 	sem=$(_sem_sempath "$name")
-	passed=0
+	passed=false
 
-	while (( passed == 0 )); do
+	while ! "$passed"; do
 		mutex_lock "$mutex"
 
 		if _sem_dec "$sem"; then
-			passed=1
+			passed=true
 		fi
 
 		mutex_unlock "$mutex"
+
+		# Workaround to prevent busy-waiting. The semaphore
+		# might get increased before we get to the inotifywait,
+		# in which case we'd wait for a whole second, during
+		# which another process might pass the semaphore. This
+		# is not ideal, but to prevent this we'd need something
+		# like pthread_cond_wait().
+		if ! "$passed"; then
+			inotifywait -qq -t 1 "$sem"
+		fi
 	done
 
 	return 0
