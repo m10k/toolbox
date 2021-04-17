@@ -71,7 +71,7 @@
 #
 
 __init() {
-	if ! include "mutex" "sem"; then
+	if ! include "log" "mutex" "sem"; then
 		return 1
 	fi
 
