@@ -5,24 +5,28 @@ __init() {
 		return 1
 	fi
 
+	declare -xgir __opt_flag_required=1
+	declare -xgir __opt_flag_has_value=2
+
 	declare -Axg __opt_short=()
 	declare -Axg __opt_long=()
 	declare -Axg __opt_desc=()
 	declare -Axg __opt_flags=()
 	declare -Axg __opt_value=()
+	declare -Axg __opt_default=()
 	declare -Axg __opt_action=()
 	declare -Axg __opt_map=()
 	declare -xgi __opt_num=0
 	declare -xgi __opt_longest=0
 
-	opt_add_arg "h" "help" "no" 0 \
+	opt_add_arg "h" "help" "" 0 \
 		    "Print this text" \
 		    opt_print_help
 
-	opt_add_arg "v" "verbose" "no" 0 \
+	opt_add_arg "v" "verbose" "" 0 \
 		    "Be more verbose" \
 		    log_increase_verbosity
-	opt_add_arg "w" "shush" "no" 0 \
+	opt_add_arg "w" "shush" "" 0 \
 		    "Be less verbose" \
 		    log_decrease_verbosity
 
@@ -38,6 +42,9 @@ opt_add_arg() {
 	local action
 
 	local optlen
+	local num_flags
+	local bflags
+	local i
 
 	short="$1"
 	long="$2"
@@ -51,13 +58,32 @@ opt_add_arg() {
 		return 1
 	fi
 
+	num_flags="${#flags}"
+	bflags=0
+
+	for (( i = 0; i < num_flags; i++ )); do
+		case "${flags:$i:1}" in
+			"r")
+				((bflags |= __opt_flag_required))
+				;;
+
+			"v")
+				((bflags |= __opt_flag_has_value))
+				;;
+
+			*)
+				return 1
+				;;
+		esac
+	done
+
 	optlen="${#long}"
 
 	__opt_short["$long"]="$short"
 	__opt_long["$short"]="$long"
-	__opt_flags["$long"]="$flags"
+	__opt_flags["$long"]="$bflags"
 	__opt_desc["$long"]="$desc"
-	__opt_value["$long"]="$default"
+	__opt_default["$long"]="$default"
 	__opt_action["$long"]="$action"
 
 	__opt_map["-$short"]="$long"
@@ -105,10 +131,13 @@ opt_print_help() {
 }
 
 opt_parse() {
-	local opt
+	local optname
+	local err
 	local i
 
 	declare -argx __opt_argv=("$@")
+
+	err=0
 
 	for (( i = 1; i <= $#; i++ )); do
 		local param
@@ -128,7 +157,7 @@ opt_parse() {
 		flags="${__opt_flags[$long]}"
 		action="${__opt_action[$long]}"
 
-		if [[ "$flags" == "yes" ]]; then
+		if (( flags & __opt_flag_has_value )); then
 			((i++))
 
 			if (( i > $# )); then
@@ -144,7 +173,7 @@ opt_parse() {
 
 		__opt_value["$long"]="$value"
 
-		if ! [[ -z "$action" ]]; then
+		if [[ -n "$action" ]]; then
 			local err
 
 			"$action" "$long" "$value"
@@ -156,7 +185,22 @@ opt_parse() {
 		fi
 	done
 
-	return 0
+	for optname in "${__opt_long[@]}"; do
+		local flags
+
+		flags="${__opt_flags[$optname]}"
+
+		if ! (( flags & __opt_flag_required )); then
+			continue
+		fi
+
+		if ! array_contains "$optname" "${!__opt_value[@]}"; then
+			log_error "Missing required argument: $optname"
+			err=1
+		fi
+	done
+
+	return "$err"
 }
 
 opt_get() {
@@ -164,11 +208,12 @@ opt_get() {
 
 	long="$1"
 
-	if ! array_contains "$long" "${!__opt_value[@]}"; then
-		return 1
+	if array_contains "$long" "${!__opt_value[@]}"; then
+		echo "${__opt_value[$long]}"
+	else
+		echo "${__opt_default[$long]}"
 	fi
 
-	echo "${__opt_value[$long]}"
 	return 0
 }
 
