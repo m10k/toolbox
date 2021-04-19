@@ -26,7 +26,7 @@ __init() {
 	opt_add_arg "v" "verbose" "" 0 \
 		    "Be more verbose" \
 		    log_increase_verbosity
-	opt_add_arg "w" "shush" "" 0 \
+	opt_add_arg "q" "quiet" "" 0 \
 		    "Be less verbose" \
 		    log_decrease_verbosity
 
