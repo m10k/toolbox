@@ -27,7 +27,9 @@ mutex_lock() {
 	lock="$1"
 
 	while ! mutex_trylock "$lock"; do
-		inotifywait -qq "${lock%/*}"
+		if ! inotifywait -qq "${lock%/*}"; then
+			return 1
+		fi
 	done
 
 	return 0
