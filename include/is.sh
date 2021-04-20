@@ -57,7 +57,7 @@ is_alpha() {
 
 	str="$1"
 
-	if is_upper "$str" || is_lower "$str"; then
+	if [[ "$str" =~ ^[a-zA-Z]+$ ]]; then
 		return 0
 	fi
 
@@ -69,7 +69,7 @@ is_alnum() {
 
 	str="$1"
 
-	if is_alpha "$str" || is_digits "$str"; then
+	if [[ "$str" =~ ^[a-zA-Z0-9]+ ]]; then
 		return 0
 	fi
 
