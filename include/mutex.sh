@@ -14,7 +14,7 @@ mutex_trylock() {
 
 	lock="$1"
 
-	if ! ln -s "$$" "$lock" &> /dev/null; then
+	if ! ln -s "$BASHPID" "$lock" &> /dev/null; then
 		return 1
 	fi
 
@@ -45,7 +45,7 @@ mutex_unlock() {
 		return 1
 	fi
 
-	if [ "$owner" -ne "$$" ]; then
+	if [ "$owner" -ne "$BASHPID" ]; then
 		return 2
 	fi
 
