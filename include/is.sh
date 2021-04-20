@@ -4,7 +4,7 @@ __init() {
 	return 0
 }
 
-is_digit() {
+is_digits() {
 	local str
 
 	str="$1"
@@ -69,7 +69,7 @@ is_alnum() {
 
 	str="$1"
 
-	if is_alpha "$str" || is_digit "$str"; then
+	if is_alpha "$str" || is_digits "$str"; then
 		return 0
 	fi
 
