@@ -10,9 +10,7 @@ __init() {
 }
 
 mutex_trylock() {
-	local lock
-
-	lock="$1"
+	local lock="$1"
 
 	if ! ln -s "$BASHPID" "$lock" &> /dev/null; then
 		return 1
@@ -22,11 +20,14 @@ mutex_trylock() {
 }
 
 mutex_lock() {
-	local lock
-
-	lock="$1"
+	local lock="$1"
 
 	while ! mutex_trylock "$lock"; do
+		# We can't inotifywait on symlinks. Which is
+		# fine because when the symlink is removed, the
+		# containing directory is changed. Hence, we can
+		# watch the containing directory instead.
+
 		if ! inotifywait -qq "${lock%/*}"; then
 			return 1
 		fi
@@ -36,20 +37,19 @@ mutex_lock() {
 }
 
 mutex_unlock() {
-	local lock
-	local owner
+	local lock="$1"
 
-	lock="$1"
+	local owner
 
 	if ! owner=$(readlink "$lock" 2> /dev/null); then
 		return 1
 	fi
 
-	if [ "$owner" -ne "$BASHPID" ]; then
+	if (( owner != BASHPID )); then
 		return 2
 	fi
 
-	if ! rm -f "$lock"; then
+	if ! rm "$lock"; then
 		return 3
 	fi
 

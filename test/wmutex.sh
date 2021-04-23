@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 . toolbox.sh
-include "mutex"
+include "wmutex"
 
 setup() {
 	delete=()
@@ -19,77 +19,77 @@ teardown() {
 	return 0
 }
 
-@test "mutex_trylock() returns success if the lock was created" {
+@test "wmutex_trylock() returns success if the lock was created" {
 	local name
 
 	name="test_$RANDOM"
 
-	mutex_trylock "$name"
+	wmutex_trylock "$name"
 	[ -L "$name" ]
 
 	delete+=("$name")
 }
 
-@test "mutex_trylock() returns failure if the lock was not created" {
+@test "wmutex_trylock() returns failure if the lock was not created" {
 	local name
 
 	name="/$RANDOM/$RANDOM/$RANDOM/$RANDOM"
 
 	! [ -d "${name%/*}" ]
-	! mutex_trylock "$name"
+	! wmutex_trylock "$name"
 }
 
-@test "mutex_lock() returns success if the lock was created" {
+@test "wmutex_lock() returns success if the lock was created" {
 	local name
 
 	name="test_$RANDOM"
 
-	mutex_lock "$name"
+	wmutex_lock "$name"
 	[ -L "$name" ]
 
 	delete+=("$name")
 }
 
-@test "mutex_lock() returns failure if the lock was not created" {
+@test "wmutex_lock() returns failure if the lock was not created" {
 	local name
 
 	# Unlikely to exist path
 	name="/$RANDOM/$RANDOM/RANDOM/$RANDOM"
 
 	! [ -d "${name%/*}" ]
-	! mutex_lock "$name"
+	! wmutex_lock "$name"
 	! [ -L "$name" ]
 }
 
-@test "mutex_unlock() returns success if the lock was removed" {
+@test "wmutex_unlock() returns success if the lock was removed" {
 	local name
 
 	name="test_$RANDOM"
 
-	mutex_lock "$name"
-	mutex_unlock "$name"
+	wmutex_lock "$name"
+	wmutex_unlock "$name"
 	! [ -e "$name" ]
 }
 
-@test "mutex_unlock() returns failure if the lock was not removed" {
+@test "wmutex_unlock() returns failure if the lock was not removed" {
 	local name
 
 	# Unlikely to exist path
 	name="/$RANDOM/$RANDOM/$RANDOM/$RANDOM"
 
 	! [ -d "${name%/*}" ]
-	! mutex_unlock "$name"
+	! wmutex_unlock "$name"
 }
 
-@test "mutex_unlock() returns failure if mutex belongs to a different process" {
+@test "wmutex_unlock() returns success if wmutex belongs to a different process" {
 	local name
 
 	name="test_$RANDOM"
 
-	mutex_lock "$name"
+	wmutex_lock "$name"
 	delete+=("$name")
 
 	[ -L "$name" ]
-	( ! mutex_unlock "$name" )
-	[ -L "$name" ]
+	( wmutex_unlock "$name" )
+	! [ -L "$name" ]
 }
