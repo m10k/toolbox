@@ -62,7 +62,7 @@ conf_set() {
 		fi
 	fi
 
-	if ! echo "$name=$value" > "$__conf_file"; then
+	if ! echo "$name=$value" >> "$__conf_file"; then
 		return 1
 	fi
 
