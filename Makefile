@@ -1,4 +1,4 @@
-PHONY = install uninstall
+PHONY = install uninstall test
 
 ifeq ($(PREFIX), )
 	PREFIX = /usr
@@ -7,6 +7,9 @@ endif
 all:
 
 clean:
+
+test:
+	./test.sh
 
 install:
 	mkdir -p $(DESTDIR)/$(PREFIX)/share/toolbox
