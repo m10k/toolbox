@@ -43,7 +43,7 @@
 # The queue is implemented as a directory like this:
 #
 #  queue/
-#   |- lock
+#   |- mutex
 #   |- sem
 #   '- data
 #
@@ -451,5 +451,34 @@ queue_get_file() {
 	fi
 
 	echo "$dest"
+	return 0
+}
+
+queue_foreach() {
+	local name="$1"
+	local func="$2"
+	local args=("${@:3}")
+
+	local data
+	local mutex
+	local item
+
+	data=$(_queue_get_data "$name")
+	mutex=$(_queue_get_mutex "$name")
+
+	if ! mutex_lock "$mutex"; then
+		return 1
+	fi
+
+	if [ -f "$data" ]; then
+		while read -r item; do
+			if ! "$func" "$item" "${args[@]}"; then
+				break
+			fi
+		done < "$data"
+	fi
+
+	mutex_unlock "$mutex"
+
 	return 0
 }
