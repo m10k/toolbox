@@ -6,44 +6,21 @@
 #
 
 __init() {
-	if ! include "mutex"; then
+	if ! include "is" "mutex" "wmutex" "log"; then
 		return 1
 	fi
 
 	declare -xgr __sem_path="$TOOLBOX_HOME/sem"
 
+	if ! mkdir -p "$__sem_path"; then
+		return 1
+	fi
+
 	return 0
 }
 
-
-_sem_mutexpath() {
-	local sem
-
-	sem="$1"
-
-	if [[ "$sem" == *"/"* ]]; then
-		echo "$sem.mutex"
-	else
-		echo "$__sem_path/$sem.mutex"
-	fi
-}
-
-_sem_ownerpath() {
-	local sem
-
-	sem="$1"
-
-	if [[ "$sem" == *"/"* ]]; then
-		echo "$sem.owner"
-	else
-		echo "$__sem_path/$sem.owner"
-	fi
-}
-
-_sem_sempath() {
-	local sem
-
-	sem="$1"
+_sem_get_path() {
+	local sem="$1"
 
 	if [[ "$sem" == *"/"* ]]; then
 		echo "$sem"
@@ -52,17 +29,40 @@ _sem_sempath() {
 	fi
 }
 
-_sem_inc() {
-	local sem
+_sem_get_waitlock() {
+	local sem="$1"
+
+	echo "$(_sem_get_path "$sem")/waitlock"
+}
+
+_sem_get_countlock() {
+	local sem="$1"
+
+	echo "$(_sem_get_path "$sem")/countlock"
+}
+
+_sem_get_owner() {
+	local sem="$1"
+
+	echo "$(_sem_get_path "$sem")/owner"
+}
+
+_sem_get_counter() {
+	local sem="$1"
+
+	echo "$(_sem_get_path "$sem")/counter"
+}
+
+_sem_counter_inc() {
+	local sem="$1"
+
 	local value
 
-	sem="$1"
-
-	if ! value=$(cat "$sem"); then
+	if ! value=$(< "$sem"); then
 		return 1
 	fi
 
-	((value++))
+	((++value))
 
 	if ! echo "$value" > "$sem"; then
 		return 1
@@ -71,21 +71,18 @@ _sem_inc() {
 	return 0
 }
 
-_sem_dec() {
-	local sem
+_sem_counter_dec() {
+	local sem="$1"
+
 	local value
 
-	sem="$1"
-
-	if ! value=$(cat "$sem"); then
+	if ! value=$(< "$sem"); then
 		return 1
 	fi
 
-	if (( value == 0 )); then
+	if (( --value < 0 )); then
 		return 1
 	fi
-
-	((value--))
 
 	if ! echo "$value" > "$sem"; then
 		return 1
@@ -95,67 +92,79 @@ _sem_dec() {
 }
 
 sem_init() {
-	local name
-	local value
+	local name="$1"
+	local value="$2"
 
-	local mutex
 	local sem
+	local waitlock
+	local countlock
+	local counter
 	local owner
 	local err
 
-	name="$1"
-	value="$2"
-	err=0
+	err=1
 
-	mutex=$(_sem_mutexpath "$name")
-	sem=$(_sem_sempath "$name")
-	owner=$(_sem_ownerpath "$name")
+	sem=$(_sem_get_path "$name")
+	waitlock=$(_sem_get_waitlock "$name")
+	countlock=$(_sem_get_countlock "$name")
+	counter=$(_sem_get_counter "$name")
+	owner=$(_sem_get_owner "$name")
 
-	if ! [[ "$value" =~ ^[0-9]+$ ]]; then
+	if ! is_digits "$value"; then
+		log_debug "Initial value must be numeric"
 		return 1
 	fi
 
-	if ! mkdir -p "${sem%/*}"; then
+	if ! mkdir "$sem"; then
+		log_error "Semaphore $sem exists"
 		return 1
 	fi
 
-	# If the semaphore is new, locking must succeed,
-	# otherwise it was not a new semaphore
-	if ! mutex_trylock "$mutex"; then
-		log_error "Could not acquire $mutex"
-		return 1
+	if ! mutex_trylock "$countlock"; then
+		log_error "Could not acquire $countlock"
+	else
+		# If value is greater than zero, the next call to sem_wait() does
+		# not have to wait for a sem_post() to happen. Hence the waitlock
+		# does not need to be locked.
+
+		if ! mutex_trylock "$owner"; then
+			log_error "Could not acquire mutex $owner"
+		elif (( value == 0 )) && ! wmutex_trylock "$waitlock"; then
+			log_error "Could not acquire wmutex $waitlock"
+		elif ! echo "$value" > "$counter"; then
+			log_error "Could not write counter $counter"
+		else
+			err=0
+		fi
+
+		mutex_unlock "$countlock"
 	fi
 
-	if ! mutex_trylock "$owner"; then
-		log_error "Could not acquire $mutex"
-		err=1
-	elif ! echo "$value" > "$sem"; then
-		err=1
+	if (( err != 0 )); then
+		if ! rm -rf "$sem"; then
+			log_error "Could not remove $sem"
+		fi
 	fi
 
-	mutex_unlock "$mutex"
 	return "$err"
 }
 
 sem_destroy() {
-	local name
+	local name="$1"
 
-	local mutex
 	local sem
 	local owner
 
-	name="$1"
+	sem=$(_sem_get_path "$name")
+	owner=$(_sem_get_owner "$name")
 
-	mutex=$(_sem_mutexpath "$name")
-	sem=$(_sem_sempath "$name")
-	owner=$(_sem_ownerpath "$name")
-
-	# Make sure only the owner can destroy the semaphore
 	if ! mutex_unlock "$owner"; then
+		log_debug "Could not unlock $owner"
 		return 1
 	fi
 
-	if ! rm -f "$mutex" "$sem"; then
+	if ! rm -rf "$sem"; then
+		log_error "Could not remove $sem"
 		return 1
 	fi
 
@@ -163,86 +172,91 @@ sem_destroy() {
 }
 
 sem_wait() {
-	local name
+	local name="$1"
 
-	local mutex
-	local sem
-	local passed
+	local waitlock
+	local countlock
+	local counter
+	local err
 
-	name="$1"
+	waitlock=$(_sem_get_waitlock "$name")
+	countlock=$(_sem_get_countlock "$name")
+	counter=$(_sem_get_counter "$name")
+	err=1
 
-	mutex=$(_sem_mutexpath "$name")
-	sem=$(_sem_sempath "$name")
-	passed=false
+	if ! wmutex_lock "$waitlock"; then
+		return 1
+	fi
 
-	while ! "$passed"; do
-		mutex_lock "$mutex"
+	if mutex_lock "$countlock"; then
+		local count
 
-		if _sem_dec "$sem"; then
-			passed=true
+		_sem_counter_dec "$counter"
+
+		# if count was greater than 1, we need to unlock the waitlock
+		# because there won't be anyone calling sem_post()
+
+		count=$(<"$counter")
+		if (( count > 0 )); then
+			wmutex_unlock "$waitlock"
 		fi
 
-		mutex_unlock "$mutex"
+		mutex_unlock "$countlock"
+		err=0
+	fi
 
-		# Workaround to prevent busy-waiting. The semaphore
-		# might get increased before we get to the inotifywait,
-		# in which case we'd wait for a whole second, during
-		# which another process might pass the semaphore. This
-		# is not ideal, but to prevent this we'd need something
-		# like pthread_cond_wait().
-		if ! "$passed"; then
-			inotifywait -qq -t 1 "$sem"
-		fi
-	done
-
-	return 0
+	return "$err"
 }
 
 sem_trywait() {
-	local name
+	local name="$1"
 
-	local mutex
-	local sem
-	local res
+	local waitlock
+	local countlock
+	local counter
+	local err
 
-	name="$1"
+	waitlock=$(_sem_get_waitlock "$name")
+	countlock=$(_sem_get_countlock "$name")
+	counter=$(_sem_get_counter "$name")
+	err=1
 
-	mutex=$(_sem_mutexpath "$name")
-	sem=$(_sem_sempath "$name")
-	res=1
-
-	mutex_lock "$mutex"
-
-	if _sem_dec "$sem"; then
-		res=0
+	if ! wmutex_trylock "$waitlock"; then
+		return 1
 	fi
 
-	mutex_unlock "$mutex"
+	if mutex_lock "$countlock"; then
+		_sem_counter_dec "$counter"
+		mutex_unlock "$countlock"
+		err=0
+	fi
 
-	return "$res"
+	return "$err"
 }
 
 sem_post() {
-	local name
+	local name="$1"
 
-	local mutex
-	local sem
+	local waitlock
+	local countlock
+	local counter
 	local err
-	local value
 
-	name="$1"
+	waitlock=$(_sem_get_waitlock "$name")
+	countlock=$(_sem_get_countlock "$name")
+	counter=$(_sem_get_counter "$name")
+	err=1
 
-	mutex=$(_sem_mutexpath "$name")
-	sem=$(_sem_sempath "$name")
-	err=0
+	if mutex_lock "$countlock"; then
+		_sem_counter_inc "$counter"
+		mutex_unlock "$countlock"
 
-	mutex_lock "$mutex"
+		if [ -L "$waitlock" ]; then
+			wmutex_unlock "$waitlock"
+		fi
 
-	if ! _sem_inc "$sem"; then
-		err=1
+		err=0
 	fi
-
-	mutex_unlock "$mutex"
 
 	return "$err"
 }
@@ -250,27 +264,26 @@ sem_post() {
 sem_peek() {
 	local name="$1"
 
-	local mutex
-	local sem
+	local countlock
+	local counter
 	local value
 	local err
 
-	mutex=$(_sem_mutexpath "$name")
-	sem=$(_sem_sempath "$name")
-	err=false
+        countlock=$(_sem_get_countlock "$name")
+	counter=$(_sem_get_counter "$name")
+	err=1
 
-	mutex_lock "$mutex"
+	if mutex_lock "$countlock"; then
+		if value=$(<"$counter"); then
+			err=0
+		fi
 
-	if ! value=$(<"$sem"); then
-		err=true
+		mutex_unlock "$countlock"
 	fi
 
-	mutex_unlock "$mutex"
-
-	if "$err"; then
-		return 1
+	if (( err == 0 )); then
+		echo "$value"
 	fi
 
-	echo "$value"
-	return 0
+	return "$err"
 }
