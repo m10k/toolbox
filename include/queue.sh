@@ -267,9 +267,11 @@ queue_put_unique() {
 _queue_move_to_q() {
 	local queue="$1"
 	local filepath="$2"
+	local userdata="$3"
 
 	local filedir
 	local filename
+	local filename_enc
 	local data
 	local dest
 
@@ -277,13 +279,14 @@ _queue_move_to_q() {
 	data=$(_queue_get_data "$queue")
 
 	filename="${filepath##*/}"
+	filename_enc=$(base64 <<< "$filename")
 	dest="$filedir/$filename"
 
 	if ! cp -a "$filepath" "$dest"; then
 		return 1
 	fi
 
-	if ! echo "$dest" >> "$data"; then
+	if ! echo "$filename_enc $userdata" >> "$data"; then
 		log_error "Could not append to queue: $data"
 
 		if ! rm -rf "$dest"; then
@@ -303,7 +306,9 @@ _queue_move_to_q() {
 queue_put_file() {
 	local queue="$1"
 	local filepath="$2"
+	local userdata="${*:3}"
 
+	local userdata_enc
 	local mutex
 	local sem
 	local filedir
@@ -320,6 +325,7 @@ queue_put_file() {
 	mutex=$(_queue_get_mutex "$queue")
 	filedir=$(_queue_get_filedir "$queue")
 	sem=$(_queue_get_sem "$queue")
+	userdata_enc=$(base64 <<< "$userdata")
 
 	mutex_lock "$mutex"
 
@@ -334,7 +340,7 @@ queue_put_file() {
 			# Must not succeed if the file was already in the queue
 			err=1
 		else
-			if _queue_move_to_q "$queue" "$filepath"; then
+			if _queue_move_to_q "$queue" "$filepath" "$userdata_enc"; then
 				err=0
 			else
 				err=1
@@ -404,6 +410,7 @@ queue_get_file() {
 	local item
 	local dest
 	local err
+	local userdata
 
 	if ! [ -d "$destdir" ]; then
 		log_error "Destination must be a directory"
@@ -413,6 +420,7 @@ queue_get_file() {
 	sem=$(_queue_get_sem "$queue")
 	mutex=$(_queue_get_mutex "$queue")
 	data=$(_queue_get_data "$queue")
+	userdata=""
 
 	err=false
 
@@ -425,20 +433,50 @@ queue_get_file() {
 	if ! item=$(head -n 1 "$data" 2>/dev/null); then
 		err=true
 	else
-		dest="$destdir/${item##*/}"
+		local item_name
+		local src
+
+		# item has format "BASE64_STR BASE64_STR"
+		item_name=$(base64 --decode <<< "${item% *}")
+		userdata=$(base64 --decode <<< "${item#* }")
+		src="$(_queue_get_filedir "$queue")/$item_name"
+
+		dest="${destdir%/}/$item_name"
+
+		# The reason we remove the item from the list first is that
+		# it is much cheaper to put it back in case the move failed
+		# than the other way around.
 
 		if ! sed -i '1d' "$data" 2>/dev/null; then
 			log_error "Could not remove item from $data"
 			err=true
 		else
-			log_debug "Moving $item to $dest"
+			log_debug "Moving $src to $dest"
 
-			if ! mv "$item" "$dest"; then
-				log_error "Could not move $item to $dest"
+			if ! mv "$src" "$dest"; then
+				local tmpfile
+				local restored
 
-				if ! sed -i "1s|^|$item\n|" "$data"; then
-					log_error "Could not put item back in queue"
+				log_error "Could not move $src to $dest"
+				restored=true
+
+				# Put the file back to the head of the list
+				if ! tmpfile=$(mktemp); then
+					restored=false
+				elif ! echo "$item" | cat - "$data" > "$tmpfile"; then
+					restored=false
+					rm "$tmpfile"
+				elif ! mv "$tmpfile" "$data"; then
+					restored=false
+					rm "$tmpfile"
 				fi
+
+				if ! "$restored"; then
+					log_error "Could not restore queue $queue"
+				else
+					sem_post "$sem"
+				fi
+
 				err=true
 			fi
 		fi
@@ -450,7 +488,7 @@ queue_get_file() {
 		return 1
 	fi
 
-	echo "$dest"
+	echo "$dest $userdata"
 	return 0
 }
 
