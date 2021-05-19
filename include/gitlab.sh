@@ -139,6 +139,21 @@ gitlab_user_list() {
 	return 0
 }
 
+gitlab_get_current_user() {
+	local host="$1"
+	local token="$2"
+
+	local url
+
+	url="$host/api/v4/user"
+
+	if ! _gitlab_get "$token" "$url"; then
+		return 1
+	fi
+
+	return 0
+}
+
 gitlab_get_user_id() {
 	local host
 	local token
