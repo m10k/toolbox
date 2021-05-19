@@ -183,43 +183,39 @@ gitlab_get_user_id() {
 }
 
 gitlab_fork() {
-	local host
-        local token
-        local project
+	local host="$1"
+	local token="$2"
+	local project="$3"
+	local namespace="$4"
 
-        local url
-        local id
-        local data
-        local resp
+	local url
+	local id
+	local data
 
-	host="$1"
-        token="$2"
-        project="$3"
+	id=$(_gitlab_urlencode "$project")
+	url="$host/api/v4/projects/$id/fork"
 
-        id=$(_gitlab_urlencode "$project")
-        url="$host/api/v4/projects/$id/fork"
-	data=$(json_make "id" "$id")
+	# json_object() will silently drop the namespace if "$namespace" is empty
+	data=$(json_object "id" "$id" \
+			   "namespace" "$namespace")
 
-        if ! _gitlab_post "$token" "$url" "$data"; then
-                return 1
-        fi
+	if ! _gitlab_post "$token" "$url" "$data"; then
+		return 1
+	fi
 
-        return 0
+	return 0
 }
 
 gitlab_fork_sync() {
-	local host
-	local token
-	local project
+	local host="$1"
+	local token="$2"
+	local project="$3"
+	local namespace="$4"
 
 	local resp
 	local fork_id
 
-	host="$1"
-	token="$2"
-	project="$3"
-
-	if ! resp=$(gitlab_fork "$host" "$token" "$project"); then
+	if ! resp=$(gitlab_fork "$host" "$token" "$project" "$namespace"); then
 		echo "Could not fork project" 1>&2
 		return 1
 	fi
