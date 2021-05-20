@@ -90,7 +90,7 @@ opt_add_arg() {
 	__opt_map["--$long"]="$long"
 
 	if (( __opt_longest < optlen )); then
-		__opt_longest=optlen;
+		__opt_longest="$optlen"
 	fi
 
 	((__opt_num++))
