@@ -8,14 +8,14 @@ __init() {
 	declare -xgir __opt_flag_required=1
 	declare -xgir __opt_flag_has_value=2
 
-	declare -Axg __opt_short=()
-	declare -Axg __opt_long=()
-	declare -Axg __opt_desc=()
-	declare -Axg __opt_flags=()
-	declare -Axg __opt_value=()
-	declare -Axg __opt_default=()
-	declare -Axg __opt_action=()
-	declare -Axg __opt_map=()
+	declare -Axg __opt_short
+	declare -Axg __opt_long
+	declare -Axg __opt_desc
+	declare -Axg __opt_flags
+	declare -Axg __opt_value
+	declare -Axg __opt_default
+	declare -Axg __opt_action
+	declare -Axg __opt_map
 	declare -xgi __opt_num=0
 	declare -xgi __opt_longest=0
 
