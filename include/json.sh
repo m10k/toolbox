@@ -31,7 +31,7 @@ json_object() {
 		local re_array
 
 		re_number='^[0-9]+$'
-		re_object='^{.*}$'
+		re_object='^\{.*\}$'
 		re_array='^\[.*\]$'
 
                 name="${!i}"
@@ -73,7 +73,7 @@ json_array() {
 	local re_array
 
 	re_number='^[0-9]+$'
-	re_object='^{.*}$'
+	re_object='^\{.*\}$'
 	re_array='^\[.*\]$'
 
 	printf "["
