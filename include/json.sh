@@ -26,6 +26,14 @@ json_object() {
                 local name
                 local value
 
+		local re_number
+		local re_object
+		local re_array
+
+		re_number='^[0-9]+$'
+		re_object='^{.*}$'
+		re_array='^\[.*\]$'
+
                 name="${!i}"
                 ((i++))
                 value="${!i}"
@@ -38,8 +46,13 @@ json_object() {
                         printf ', '
                 fi
 
-                if [[ "$value" =~ ^[0-9]+$ ]]; then
+                if [[ "$value" =~ $re_number ]]; then
                         printf '"%s": %d' "$name" "$value"
+
+		elif [[ "$value" =~ $re_object ]] ||
+		     [[ "$value" =~ $re_array ]]; then
+                        printf '"%s": %s' "$name" "$value"
+
                 else
                         printf '"%s": "%s"' "$name" "$value"
                 fi
@@ -55,6 +68,14 @@ json_array() {
 	local arg
 	local n
 
+	local re_number
+	local re_object
+	local re_array
+
+	re_number='^[0-9]+$'
+	re_object='^{.*}$'
+	re_array='^\[.*\]$'
+
 	printf "["
 	n=0
 
@@ -67,8 +88,13 @@ json_array() {
 			printf ", "
 		fi
 
-		if [[ "$arg" =~ ^[0-9]+$ ]]; then
+		if [[ "$arg" =~ $re_number ]]; then
 			printf '%d' "$arg"
+
+		elif [[ "$arg" =~ $re_object ]] ||
+		     [[ "$arg" =~ $re_array ]]; then
+			printf '%s' "$arg"
+
 		else
 			printf '"%s"' "$arg"
 		fi
