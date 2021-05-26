@@ -500,9 +500,11 @@ queue_foreach() {
 	local data
 	local mutex
 	local item
+	local err
 
 	data=$(_queue_get_data "$name")
 	mutex=$(_queue_get_mutex "$name")
+	err=0
 
 	if ! mutex_lock "$mutex"; then
 		return 1
@@ -511,6 +513,7 @@ queue_foreach() {
 	if [ -f "$data" ]; then
 		while read -r item; do
 			if ! "$func" "$item" "${args[@]}"; then
+				err=1
 				break
 			fi
 		done < "$data"
@@ -518,5 +521,5 @@ queue_foreach() {
 
 	mutex_unlock "$mutex"
 
-	return 0
+	return "$err"
 }
