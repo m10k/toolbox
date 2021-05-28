@@ -105,3 +105,47 @@ json_array() {
 
 	return 0
 }
+
+json_array_head() {
+	local array="$1"
+
+	local head
+
+	if ! head=$(jq -e -r '.[0]' <<< "$array"); then
+		return 1
+	fi
+
+	echo "$head"
+	return 0
+}
+
+json_array_tail() {
+	local array="$1"
+
+	local tail
+	local element
+	local new
+
+	tail=()
+
+	while read -r element; do
+		tail+=("$element")
+	done < <(jq -r '.[1:][]' <<< "$array")
+
+	if ! new=$(json_array "${tail[@]}"); then
+		return 1
+	fi
+
+	echo "$new"
+	return 0
+}
+
+json_array_to_lines() {
+	local array="$1"
+
+        if ! jq -r '.[]' <<< "$array"; then
+		return 1
+	fi
+
+	return 0
+}
