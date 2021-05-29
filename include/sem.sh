@@ -173,6 +173,7 @@ sem_destroy() {
 
 sem_wait() {
 	local name="$1"
+	local -i timeout="$2"
 
 	local waitlock
 	local countlock
@@ -184,7 +185,7 @@ sem_wait() {
 	counter=$(_sem_get_counter "$name")
 	err=1
 
-	if ! wmutex_lock "$waitlock"; then
+	if ! wmutex_lock "$waitlock" "$timeout"; then
 		return 1
 	fi
 

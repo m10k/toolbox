@@ -363,6 +363,7 @@ queue_put_file() {
 
 queue_get() {
 	local queue="$1"
+	local -i timeout="$2"
 
 	local sem
 	local mutex
@@ -376,7 +377,7 @@ queue_get() {
 
 	err=false
 
-	if ! sem_wait "$sem"; then
+	if ! sem_wait "$sem" "$timeout"; then
 		return 1
 	fi
 
@@ -403,6 +404,7 @@ queue_get() {
 queue_get_file() {
 	local queue="$1"
 	local destdir="$2"
+	local -i timeout="$3"
 
 	local sem
 	local mutex
@@ -424,7 +426,7 @@ queue_get_file() {
 
 	err=false
 
-	if ! sem_wait "$sem"; then
+	if ! sem_wait "$sem" "$timeout"; then
 		return 1
 	fi
 

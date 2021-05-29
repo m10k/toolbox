@@ -21,6 +21,7 @@ mutex_trylock() {
 
 mutex_lock() {
 	local lock="$1"
+	local -i timeout="$2"
 
 	while ! mutex_trylock "$lock"; do
 		# We can't inotifywait on symlinks. Which is
@@ -28,7 +29,7 @@ mutex_lock() {
 		# containing directory is changed. Hence, we can
 		# watch the containing directory instead.
 
-		if ! inotifywait -qq "${lock%/*}"; then
+		if ! inotifywait -qq "${lock%/*}" -t "$timeout"; then
 			return 1
 		fi
 	done

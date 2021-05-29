@@ -21,9 +21,10 @@ wmutex_trylock() {
 
 wmutex_lock() {
 	local lock="$1"
+	local -i timeout="$2"
 
 	while ! wmutex_trylock "$lock"; do
-		if ! inotifywait -qq "${lock%/*}"; then
+		if ! inotifywait -qq "${lock%/*}" -t "$timeout"; then
 			return 1
 		fi
 	done
