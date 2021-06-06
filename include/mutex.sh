@@ -23,8 +23,12 @@ mutex_lock() {
 	local lock="$1"
 	local -i timeout="$2"
 
+	local -i remaining
+
+	remaining="$timeout"
+
 	while ! mutex_trylock "$lock"; do
-		if (( --timeout < 0 )); then
+		if (( timeout != 0 && --remaining < 0 )); then
 			return 1
 		fi
 
