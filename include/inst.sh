@@ -64,11 +64,23 @@ inst_list() {
 		local semval
 		local state
 		local argv
+		local status_text
+		local status_time
+		local timestamp
 
 		owner="${sem##*/}"
 		semval=$(sem_peek "$sem")
 
 		if ! argv=$(<"$sem.argv") 2> /dev/null; then
+			continue
+		fi
+
+		if ! status_text=$(inst_get_status_message "$owner") ||
+		   ! status_time=$(inst_get_status_timestamp "$owner"); then
+			continue
+		fi
+
+		if ! timestamp=$(date --date="@$status_time" +"%Y-%m-%d %H:%M:%S %z"); then
 			continue
 		fi
 
@@ -78,7 +90,7 @@ inst_list() {
 			state="RUNNING"
 		fi
 
-		echo "$owner $state $__inst_name $argv"
+		echo "$owner $state [$timestamp:$status_text] $__inst_name $argv"
 	done < <(find "$__inst_path" -regex ".*/[0-9]+")
 
 	return 0
@@ -114,9 +126,14 @@ _inst_run() {
 	local ret
 
 	declare -xgr __inst_sem="$__inst_path/$BASHPID"
+	declare -xgr __inst_status="$__inst_path/$BASHPID.status"
 
 	if ! opt_get_argv > "$__inst_path/$BASHPID.argv"; then
 		log_error "Could not save args"
+		return 1
+	fi
+
+	if ! inst_set_status "unset"; then
 		return 1
 	fi
 
@@ -142,5 +159,61 @@ inst_start() {
 	_inst_run "$@" </dev/null &>/dev/null &
 	disown
 
+	return 0
+}
+
+inst_set_status() {
+	local status="$1"
+
+	local timestamp
+
+	if ! timestamp=$(date +"%s"); then
+		log_error "Couldn't make timestamp"
+		return 1
+	fi
+
+	if ! echo "$timestamp:$status" > "$__inst_status"; then
+		log_error "Could not write to $__inst_status"
+		return 1
+	fi
+
+	return 0
+}
+
+inst_get_status() {
+	local pid="$1"
+
+	local status
+
+	if ! status=$(< "$__inst_path/$pid.status"); then
+		log_error "Could not read from $__inst_path/$pid.status"
+		return 1
+	fi
+
+	echo "$status"
+	return 0
+}
+
+inst_get_status_message() {
+	local pid="$1"
+
+	if ! status=$(inst_get_status "$pid"); then
+		return 1
+	fi
+
+	echo "${status#*:}"
+	return 0
+}
+
+inst_get_status_timestamp() {
+	local pid="$1"
+
+	local status
+
+	if ! status=$(inst_get_status "$pid"); then
+		return 1
+	fi
+
+	echo "${status%%:*}"
 	return 0
 }
