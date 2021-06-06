@@ -24,14 +24,11 @@ mutex_lock() {
 	local -i timeout="$2"
 
 	while ! mutex_trylock "$lock"; do
-		# We can't inotifywait on symlinks. Which is
-		# fine because when the symlink is removed, the
-		# containing directory is changed. Hence, we can
-		# watch the containing directory instead.
-
-		if ! inotifywait -qq "${lock%/*}" -t "$timeout"; then
+		if (( --timeout < 0 )); then
 			return 1
 		fi
+
+		sleep 1
 	done
 
 	return 0
