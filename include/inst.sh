@@ -21,8 +21,8 @@ __init() {
 		return 1
 	fi
 
-	opt_add_arg "l" "list" "no"  0  "List running instances"  _inst_handle_opt
-	opt_add_arg "s" "stop" "yes" "" "Stop a running instance" _inst_handle_opt
+	opt_add_arg "l" "list" ""  0  "List running instances"  _inst_handle_opt
+	opt_add_arg "s" "stop" "v" "" "Stop a running instance" _inst_handle_opt
 
 	return 0
 }
