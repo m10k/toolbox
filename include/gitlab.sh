@@ -302,6 +302,25 @@ gitlab_project_get_branches() {
 	return 0
 }
 
+gitlab_project_get_merge_requests() {
+	local host="$1"
+	local token="$2"
+	local project="$3"
+
+	local url
+	local resp
+
+	project=$(_gitlab_urlencode "$project")
+	url="$host/api/v4/projects/$project/merge_requests?state=opened"
+
+	if ! resp=$(_gitlab_get "$token" "$url"); then
+		return 1
+	fi
+
+	echo "$resp"
+	return 0
+}
+
 gitlab_get_project_id() {
 	local host
 	local token
