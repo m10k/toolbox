@@ -321,6 +321,28 @@ gitlab_project_get_merge_requests() {
 	return 0
 }
 
+gitlab_list_merge_requests() {
+	local host="$1"
+	local token="$2"
+	local scope="$3"
+
+	local url
+	local resp
+
+	if [[ -z "$scope" ]]; then
+		scope="assigned_to_me"
+	fi
+
+	url="$host/api/v4/merge_requests?scope=$scope"
+
+	if ! resp=$(_gitlab_get "$token" "$url"); then
+		return 1
+	fi
+
+	echo "$resp"
+	return 0
+}
+
 gitlab_get_project_id() {
 	local host
 	local token
