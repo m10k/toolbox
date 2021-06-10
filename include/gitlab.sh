@@ -55,6 +55,18 @@ _gitlab_post() {
         return 0
 }
 
+_gitlab_put() {
+	local token="$1"
+	local url="$2"
+
+	if ! curl --silent --location -X PUT \
+	          --header "Private-Token: $token" "$url"; then
+		return 1
+	fi
+
+	return 0
+}
+
 gitlab_import_status() {
 	local host
         local token
@@ -302,6 +314,30 @@ gitlab_project_get_branches() {
 	return 0
 }
 
+gitlab_project_get_members() {
+	local host="$1"
+	local token="$2"
+	local project="$3"
+
+	local project_id
+	local url
+	local resp
+
+	if ! project_id=$(gitlab_get_project_id "$host"  \
+						"$token" \
+						"$project"); then
+		return 1
+	fi
+
+	url="$host/api/v4/projects/$project_id/members/all"
+	if ! resp=$(_gitlab_get "$token" "$url"); then
+		return 1
+	fi
+
+	echo "$resp"
+	return 0
+}
+
 gitlab_project_get_merge_requests() {
 	local host="$1"
 	local token="$2"
@@ -321,6 +357,54 @@ gitlab_project_get_merge_requests() {
 	return 0
 }
 
+gitlab_project_mergerequest_get_votes() {
+	local host="$1"
+	local token="$2"
+	local project="$3"
+	local mergerequest="$4"
+
+	local project_id
+	local url
+	local resp
+
+	if ! project_id=$(gitlab_get_project_id "$host" "$token" "$project"); then
+		return 1
+	fi
+
+	url="$host/api/v4/projects/$project_id/merge_requests/$mergerequest/award_emoji"
+	if ! resp=$(_gitlab_get "$token" "$url"); then
+		return 1
+	fi
+
+	echo "$resp"
+	return 0
+}
+
+gitlab_project_mergerequest_comment() {
+	local host="$1"
+	local token="$2"
+	local project="$3"
+	local mergerequest="$4"
+	local comment="$5"
+
+	local project_id
+	local url
+	local data
+
+	if ! project_id=$(gitlab_get_project_id "$host" "$token" "$project"); then
+		return 1
+	fi
+
+	url="$host/api/v4/projects/$project_id/merge_requests/$mergerequest/notes"
+	data=$(json_object "body" "$comment")
+
+	if ! resp=$(_gitlab_post "$token" "$url" "$data"); then
+		return 1
+	fi
+
+	return 0
+}
+
 gitlab_list_merge_requests() {
 	local host="$1"
 	local token="$2"
@@ -336,6 +420,32 @@ gitlab_list_merge_requests() {
 	url="$host/api/v4/merge_requests?scope=$scope"
 
 	if ! resp=$(_gitlab_get "$token" "$url"); then
+		return 1
+	fi
+
+	echo "$resp"
+	return 0
+}
+
+gitlab_project_merge_merge_request() {
+	local host="$1"
+	local token="$2"
+	local project="$3"
+	local mergerequest="$4"
+
+	local project_id
+	local url
+	local resp
+
+	if [[ "$project" =~ ^[0-9]+$ ]]; then
+		project_id="$project"
+	elif ! project_id=$(gitlab_get_project_id "$host" "$token" "$project"); then
+		return 1
+	fi
+
+	url="$host/api/v4/projects/$project_id/merge_requests/$mergerequest/merge"
+
+	if ! resp=$(_gitlab_put "$token" "$url"); then
 		return 1
 	fi
 
