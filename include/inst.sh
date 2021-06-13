@@ -233,3 +233,29 @@ inst_get_status_timestamp() {
 	echo "${status%%:*}"
 	return 0
 }
+
+inst_count() {
+        local -i num
+
+        if ! num=$(find "$__inst_path" -regex ".*/[0-9]+" | wc -l); then
+                return 1
+        fi
+
+        echo "$num"
+        return 0
+}
+
+inst_singleton() {
+        local args=("$@")
+
+        if (( $(inst_count) > 0 )); then
+                log_error "Another instance is already running"
+                return 1
+        fi
+
+        if ! inst_start "${args[@]}"; then
+                return 1
+        fi
+
+        return 0
+}
