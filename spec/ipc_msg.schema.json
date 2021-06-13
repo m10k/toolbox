@@ -1,0 +1,56 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://m10k.eu/toolbox/ipc.msg.json",
+    "title": "Toolbox IPC Base message",
+    "description": "The base type for toolbox IPC messages",
+    "type": "object",
+
+    "properties": {
+	"version": {
+	    "description": "The message format version",
+	    "type": "integer"
+	},
+
+	"source": {
+	    "description": "The endpoint that sent the message",
+	    "type": "string"
+	},
+
+	"destination": {
+	    "description": "The endpoint that the message is intended for",
+	    "type": "string"
+	},
+
+	"timestamp": {
+	    "description": "The UNIX timestamp when the message was sent",
+	    "type": "integer"
+	},
+
+	"user": {
+	    "description": "The login name of the sender",
+	    "type": "string"
+	},
+
+	"data": {
+	    "description": "The base64 encoded content of the message",
+	    "type": "string",
+	    "pattern": "^[0-9a-zA-Z+/]+[=]*$"
+	},
+
+	"signature": {
+	    "description": "The base64 encoded signature of the encoded data",
+	    "type": "string",
+	    "pattern": "^[0-9a-zA-Z+/]+[=]*$"
+	}
+    },
+
+    "required": [
+	"version",
+	"source",
+	"destination",
+	"timestamp",
+	"user",
+	"data",
+	"signature"
+    ]
+}
