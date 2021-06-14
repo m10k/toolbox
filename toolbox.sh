@@ -33,6 +33,10 @@ __toolbox_init() {
 
 	declare -Axg __TOOLBOX_INCLUDED
 
+	readonly -f have
+	readonly -f _try_include
+	readonly -f include
+
 	return 0
 }
 
