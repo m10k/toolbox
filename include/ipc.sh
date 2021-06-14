@@ -10,7 +10,6 @@ __init() {
 	declare -gxr  __ipc_private="$__ipc_root/priv/$USER"
 	declare -gxr  __ipc_group="toolbox_ipc"
 
-	declare -gxi  __ipc_authentication=1
 	declare -gxir __ipc_version=1
 
 	if ! mkdir -p "$__ipc_private" ||
@@ -42,18 +41,6 @@ _ipc_msg_decode() {
 	fi
 }
 
-ipc_authentication_enable() {
-	log_info "MESSAGE AUTHENTICATION ENABLED"
-	__ipc_authentication=1
-	return 0
-}
-
-ipc_authentication_disable() {
-	log_error "MESSAGE AUTHENTICATION DISABLED"
-	__ipc_authentication=0
-	return 0
-}
-
 _ipc_msg_get() {
 	local msg="$1"
 	local field="$2"
@@ -73,7 +60,6 @@ _ipc_msg_get_signature() {
 
 	local data
 	local signature
-	local output
 
 	data=$(_ipc_msg_get "$msg" "data")
 	signature=$(_ipc_msg_get "$msg" "signature")
@@ -120,8 +106,7 @@ _ipc_msg_version_supported() {
 ipc_msg_validate() {
 	local msg="$1"
 
-	if (( __ipc_authentication == 1 )) &&
-	   ! _ipc_msg_verify "$msg"; then
+	if ! _ipc_msg_verify "$msg"; then
 		return 1
 	fi
 
@@ -199,7 +184,6 @@ ipc_msg_dump() {
 
 	local version_ok
 	local signature_ok
-	local validation_status
 
 	version=$(_ipc_msg_get "$msg" "version")
 	data=$(_ipc_msg_get "$msg" "data")
@@ -207,7 +191,6 @@ ipc_msg_dump() {
 
 	version_ok="no"
 	signature_ok="no"
-	validation_status="disabled"
 
 	if _ipc_msg_version_supported "$msg"; then
 		version_ok="yes"
@@ -217,13 +200,9 @@ ipc_msg_dump() {
 		signature_ok="yes"
 	fi
 
-	if (( __ipc_authentication == 1 )); then
-		validation_status="enabled"
-	fi
-
 	cat <<EOF | log_highlight "ipc message"
 Message version: $version [supported: $version_ok]
-Signature valid: $signature_ok [validation: $validation_status]
+Signature valid: $signature_ok
 $(ipc_msg_get_signature_info "$msg")
 $(_ipc_msg_decode <<< "$msg" | jq .)
 EOF
@@ -251,14 +230,10 @@ ipc_msg_new() {
 		return 1
 	fi
 
-	if (( __ipc_authentication == 1 )); then
-		if ! signature=$(gpg --output - --detach-sig <(echo "$data") |
-					 _ipc_msg_encode); then
-			log_error "Could not make signature"
-			return 1
-		fi
-	else
-		signature="-"
+	if ! signature=$(gpg --output - --detach-sig <(echo "$data") |
+				 _ipc_msg_encode); then
+		log_error "Could not make signature"
+		return 1
 	fi
 
 	if ! message=$(json_object "version"     "$__ipc_version" \
