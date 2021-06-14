@@ -326,7 +326,7 @@ ipc_msg_get_timestamp() {
 	return 0
 }
 
-ipc_endpoint_new() {
+ipc_endpoint_open() {
 	local name="$1"
 
 	local endpoint
