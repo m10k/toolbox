@@ -61,8 +61,13 @@ _ipc_msg_get_signature() {
 	local data
 	local signature
 
-	data=$(_ipc_msg_get "$msg" "data")
-	signature=$(_ipc_msg_get "$msg" "signature")
+	if ! data=$(_ipc_msg_get "$msg" "data"); then
+		return 2
+	fi
+
+	if ! signature=$(_ipc_msg_get "$msg" "signature"); then
+		return 2
+	fi
 
 	if ! gpg --verify <(base64 -d <<< "$signature") <(echo "$data") 2>&1; then
 		return 1
@@ -90,7 +95,7 @@ _ipc_msg_version_supported() {
 
 	local -i version
 
-	if ! version=$(_ipc_msg_get "$msg" "version"); then
+	if ! version=$(ipc_msg_get_version "$msg"); then
 		log_error "Could not get version from message"
 		return 1
 	fi
@@ -117,7 +122,7 @@ ipc_msg_validate() {
 	return 0
 }
 
-ipc_msg_get_signature_info() {
+_ipc_msg_get_signature_info() {
 	local msg="$1"
 
 	local signature
@@ -138,9 +143,18 @@ ipc_msg_get_signature_info() {
 	sig_email="(unknown)"
 	sig_key="(unknown)"
 
-	if signature=$(_ipc_msg_get_signature "$msg"); then
-		sig_valid="good"
-	fi
+	signature=$(_ipc_msg_get_signature "$msg")
+	case "$?" in
+		0)
+			sig_valid="good"
+			;;
+		1)
+			sig_valid="bad"
+			;;
+		*)
+			return 1
+			;;
+	esac
 
 	if [[ "$signature" =~ $sig_nameregex ]]; then
 		sig_name="${BASH_REMATCH[1]}"
@@ -153,26 +167,6 @@ ipc_msg_get_signature_info() {
 
 	echo "$sig_valid $sig_key $sig_email $sig_name"
 	return 0
-}
-
-ipc_msg_get_signing_key() {
-	local msg="$1"
-
-	local signature
-	local keyregex
-
-	keyregex='([0-9a-fA-F]{32,})'
-
-	if ! signature=$(_ipc_msg_get_signature "$msg"); then
-		return 1
-	fi
-
-	if [[ "$signature" =~ $keyregex ]]; then
-		echo "${BASH_REMATCH[1]}"
-		return 0
-	fi
-
-	return 1
 }
 
 ipc_msg_dump() {
@@ -256,6 +250,19 @@ _ipc_msg_new() {
 	return 0
 }
 
+ipc_msg_get_version() {
+	local msg="$1"
+
+	local version
+
+	if ! version=$(_ipc_msg_get "$msg" "version"); then
+		return 1
+	fi
+
+	echo "$version"
+	return 0
+}
+
 ipc_msg_get_source() {
 	local msg="$1"
 
@@ -282,24 +289,6 @@ ipc_msg_get_destination() {
 	return 0
 }
 
-ipc_msg_get_data() {
-	local msg="$1"
-
-	local data
-	local data_raw
-
-	if ! data=$(_ipc_msg_get "$msg" "data"); then
-		return 1
-	fi
-
-	if ! data_raw=$(_ipc_msg_decode <<< "$data"); then
-		return 1
-	fi
-
-	echo "$data_raw"
-	return 0
-}
-
 ipc_msg_get_user() {
 	local msg="$1"
 
@@ -323,6 +312,84 @@ ipc_msg_get_timestamp() {
 	fi
 
 	echo "$timestamp"
+	return 0
+}
+
+ipc_msg_get_data() {
+	local msg="$1"
+
+	local data
+	local data_raw
+
+	if ! data=$(_ipc_msg_get "$msg" "data"); then
+		return 1
+	fi
+
+	if ! data_raw=$(_ipc_msg_decode <<< "$data"); then
+		return 1
+	fi
+
+	echo "$data_raw"
+	return 0
+}
+
+ipc_msg_get_signature() {
+	local msg="$1"
+
+	local signature
+
+	if ! signature=$(_ipc_msg_get "$msg" "signature"); then
+		return 1
+	fi
+
+	echo "$signature"
+	return 0
+}
+
+ipc_msg_get_signer_name() {
+	local msg="$1"
+
+	local info
+	local fields
+
+	if ! info=$(_ipc_msg_get_signature_info "$msg"); then
+		return 1
+	fi
+
+	read -ra fields <<< "$info"
+	echo "${fields[@]:3}"
+	return 0
+}
+
+ipc_msg_get_signer_email() {
+	local msg="$1"
+
+	local info
+	local fields
+
+	if ! info=$(_ipc_msg_get_signature_info "$msg"); then
+		return 1
+	fi
+
+	read -ra fields <<< "$info"
+
+	echo "${fields[2]}"
+	return 0
+}
+
+ipc_msg_get_signer_key() {
+	local msg="$1"
+
+	local info
+	local fields
+
+	if ! info=$(_ipc_msg_get_signature_info "$msg"); then
+		return 1
+	fi
+
+	read -ra fields <<< "$info"
+
+	echo "${fields[1]}"
 	return 0
 }
 
