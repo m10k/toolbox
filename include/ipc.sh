@@ -21,7 +21,7 @@ __init() {
 	return 0
 }
 
-_ipc_msg_encode() {
+_ipc_encode() {
 	local decoded="$1"
 
 	if (( $# > 0 )); then
@@ -31,7 +31,7 @@ _ipc_msg_encode() {
 	fi
 }
 
-_ipc_msg_decode() {
+_ipc_decode() {
 	local encoded="$1"
 
 	if (( $# > 0 )); then
@@ -47,7 +47,7 @@ _ipc_msg_get() {
 
 	local value
 
-	if ! value=$(_ipc_msg_decode "$msg" | jq -e -r ".$field" 2>/dev/null); then
+	if ! value=$(_ipc_decode "$msg" | jq -e -r ".$field" 2>/dev/null); then
 		return 1
 	fi
 
@@ -198,7 +198,7 @@ ipc_msg_dump() {
 Message version: $version [supported: $version_ok]
 Signature valid: $signature_ok
 $(ipc_msg_get_signature_info "$msg")
-$(_ipc_msg_decode <<< "$msg" | jq .)
+$(_ipc_decode <<< "$msg" | jq .)
 EOF
 	return 0
 }
@@ -214,7 +214,7 @@ _ipc_msg_new() {
 	local data
 	local timestamp
 
-	if ! data=$(_ipc_msg_encode <<< "$data_raw"); then
+	if ! data=$(_ipc_encode <<< "$data_raw"); then
 		log_error "Could not encode message data"
 		return 1
 	fi
@@ -225,7 +225,7 @@ _ipc_msg_new() {
 	fi
 
 	if ! signature=$(gpg --output - --detach-sig <(echo "$data") |
-				 _ipc_msg_encode); then
+				 _ipc_encode); then
 		log_error "Could not make signature"
 		return 1
 	fi
@@ -241,7 +241,7 @@ _ipc_msg_new() {
 		return 1
 	fi
 
-	if ! encoded=$(_ipc_msg_encode "$message"); then
+	if ! encoded=$(_ipc_encode "$message"); then
 		log_error "Could not encode message"
 		return 1
 	fi
@@ -325,7 +325,7 @@ ipc_msg_get_data() {
 		return 1
 	fi
 
-	if ! data_raw=$(_ipc_msg_decode <<< "$data"); then
+	if ! data_raw=$(_ipc_decode <<< "$data"); then
 		return 1
 	fi
 
