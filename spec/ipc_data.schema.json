@@ -35,12 +35,6 @@
 	    "description": "The base64 encoded content of the message",
 	    "type": "string",
 	    "pattern": "^[0-9a-zA-Z+/]+[=]*$"
-	},
-
-	"signature": {
-	    "description": "The base64 encoded signature of the encoded data",
-	    "type": "string",
-	    "pattern": "^[0-9a-zA-Z+/]+[=]*$"
 	}
     },
 
@@ -50,7 +44,6 @@
 	"destination",
 	"timestamp",
 	"user",
-	"data",
-	"signature"
+	"data"
     ]
 }

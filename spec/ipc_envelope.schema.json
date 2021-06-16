@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://m10k.eu/toolbox/ipc.envelope.json",
+    "title": "Toolbox IPC message envelope",
+    "description": "The envelope that toolbox IPC messages are sent in",
+    "type": "object",
+
+    "properties": {
+	"message": {
+	    "description": "The message",
+	    "type": "string",
+	    "pattern": "^[0-9a-zA-Z+/]+[=]*$"
+	},
+
+	"signature": {
+	    "description": "The base64 encoded signature of the encoded data",
+	    "type": "string",
+	    "pattern": "^[0-9a-zA-Z+/]+[=]*$"
+	}
+    },
+
+    "required": [
+	"message",
+	"signature"
+    ]
+}
