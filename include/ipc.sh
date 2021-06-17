@@ -41,7 +41,39 @@ _ipc_decode() {
 	fi
 }
 
-_ipc_msg_get() {
+_ipc_sign() {
+	local data="$1"
+
+	local signature
+
+	if ! signature=$(gpg --output - --detach-sig <(echo "$data") |
+                                 _ipc_encode); then
+		return 1
+	fi
+
+	echo "$signature"
+	return 0
+}
+
+_ipc_verify() {
+	local data="$1"
+	local signature="$2"
+
+	local result
+	local err
+
+	err=0
+
+	if ! result=$(gpg --verify <(_ipc_decode <<< "$signature") <(echo "$data") 2>&1); then
+		err=1
+	fi
+
+	echo "$result"
+	return "$err"
+}
+
+
+_ipc_get() {
 	local msg="$1"
 	local field="$2"
 
@@ -55,34 +87,50 @@ _ipc_msg_get() {
 	return 0
 }
 
-_ipc_msg_get_signature() {
-	local msg="$1"
+_ipc_msg_get() {
+	local envelope="$1"
+	local field="$2"
+
+	local msg
+	local value
+
+	if ! msg=$(_ipc_get "$envelope" "message"); then
+		return 1
+	fi
+
+	if ! value=$(_ipc_get "$msg" "$field"); then
+		return 1
+	fi
+
+	echo "$value"
+	return 0
+}
+
+_ipc_envelope_get_signature() {
+	local envelope="$1"
 
 	local data
 	local signature
 
-	if ! data=$(_ipc_msg_get "$msg" "data"); then
+	if ! data=$(_ipc_get "$envelope" "message") ||
+	   ! signature=$(_ipc_get "$envelope" "signature"); then
 		return 2
 	fi
 
-	if ! signature=$(_ipc_msg_get "$msg" "signature"); then
-		return 2
-	fi
-
-	if ! gpg --verify <(base64 -d <<< "$signature") <(echo "$data") 2>&1; then
+	if ! _ipc_verify "$data" "$signature"; then
 		return 1
 	fi
 
 	return 0
 }
 
-_ipc_msg_verify() {
-	local msg="$1"
+_ipc_envelope_verify() {
+	local envelope="$1"
 
 	local error
 
-	if ! error=$(_ipc_msg_get_signature "$msg"); then
-		log_error "Invalid signature on message"
+	if ! error=$(_ipc_envelope_get_signature "$envelope"); then
+		log_error "Invalid signature on envelope"
 		log_highlight "GPG output" <<< "$error" | log_error
 		return 1
 	fi
@@ -111,7 +159,7 @@ _ipc_msg_version_supported() {
 ipc_msg_validate() {
 	local msg="$1"
 
-	if ! _ipc_msg_verify "$msg"; then
+	if ! _ipc_envelope_verify "$msg"; then
 		return 1
 	fi
 
@@ -122,7 +170,7 @@ ipc_msg_validate() {
 	return 0
 }
 
-_ipc_msg_get_signature_info() {
+_ipc_envelope_get_signature_info() {
 	local msg="$1"
 
 	local signature
@@ -143,7 +191,7 @@ _ipc_msg_get_signature_info() {
 	sig_email="(unknown)"
 	sig_key="(unknown)"
 
-	signature=$(_ipc_msg_get_signature "$msg")
+	signature=$(_ipc_envelope_get_signature "$msg")
 	case "$?" in
 		0)
 			sig_valid="good"
@@ -170,84 +218,94 @@ _ipc_msg_get_signature_info() {
 }
 
 ipc_msg_dump() {
-	local msg="$1"
+	local envelope="$1"
 
+	local msg
 	local version
-	local data
-	local signature
+	local signer_name
+	local signer_email
+	local signer_key
 
 	local version_ok
 	local signature_ok
 
-	version=$(_ipc_msg_get "$msg" "version")
-	data=$(_ipc_msg_get "$msg" "data")
-	signature=$(_ipc_msg_get "$msg" "signature")
+	msg=$(_ipc_get "$envelope" "message")
+	version=$(_ipc_msg_get "$envelope" "version")
+	signer_name=$(ipc_msg_get_signer_name "$envelope")
+	signer_email=$(ipc_msg_get_signer_email "$envelope")
+	signer_key=$(ipc_msg_get_signer_key "$envelope")
 
 	version_ok="no"
 	signature_ok="no"
 
-	if _ipc_msg_version_supported "$msg"; then
+	if _ipc_msg_version_supported "$envelope"; then
 		version_ok="yes"
 	fi
 
-	if _ipc_msg_verify "$msg"; then
+	if _ipc_envelope_verify "$envelope"; then
 		signature_ok="yes"
 	fi
 
 	cat <<EOF | log_highlight "ipc message"
 Message version: $version [supported: $version_ok]
 Signature valid: $signature_ok
-$(ipc_msg_get_signature_info "$msg")
+Signer         : $signer_name <$signer_email>
+Key fingerprint: $signer_key
+
 $(_ipc_decode <<< "$msg" | jq .)
 EOF
+
 	return 0
 }
 
 _ipc_msg_new() {
 	local source="$1"
 	local destination="$2"
-	local data_raw="$3"
+	local data="$3"
 
-	local message
 	local signature
 	local encoded
 	local data
 	local timestamp
+	local envelope
+	local message
+	local encoded_data
+	local encoded_envelope
+	local encoded_message
 
-	if ! data=$(_ipc_encode <<< "$data_raw"); then
-		log_error "Could not encode message data"
-		return 1
-	fi
+	if ! encoded_data=$(_ipc_encode <<< "$data"); then
+		log_error "Could not encode data"
 
-	if ! timestamp=$(date +"%s"); then
+	elif ! timestamp=$(date +"%s"); then
 		log_error "Could not make timestamp"
-		return 1
-	fi
 
-	if ! signature=$(gpg --output - --detach-sig <(echo "$data") |
-				 _ipc_encode); then
-		log_error "Could not make signature"
-		return 1
-	fi
+	elif ! message=$(json_object "version"     "$__ipc_version" \
+				     "source"      "$source"        \
+				     "destination" "$destination"   \
+				     "user"        "$USER"          \
+				     "timestamp"   "$timestamp"     \
+				     "data"        "$encoded_data"); then
+		log_error "Could not make message"
 
-	if ! message=$(json_object "version"     "$__ipc_version" \
-				   "source"      "$source"        \
-				   "destination" "$destination"   \
-				   "user"        "$USER"          \
-				   "timestamp"   "$timestamp"     \
-				   "data"        "$data"          \
-				   "signature" "$signature"); then
-		log_error "Could not make JSON object"
-		return 1
-	fi
-
-	if ! encoded=$(_ipc_encode "$message"); then
+	elif ! encoded_message=$(_ipc_encode "$message"); then
 		log_error "Could not encode message"
-		return 1
+
+	elif ! signature=$(_ipc_sign "$encoded_message"); then
+		log_error "Could not make signature"
+
+	elif ! envelope=$(json_object "message"   "$encoded_message" \
+				      "signature" "$signature"); then
+		log_error "Could not make envelope"
+
+	elif ! encoded_envelope=$(_ipc_encode "$envelope"); then
+		log_error "Could not encode envelope"
+
+	else
+		echo "$encoded_envelope"
+		return 0
 	fi
 
-	echo "$encoded"
-	return 0
+	return 1
 }
 
 ipc_msg_get_version() {
@@ -338,7 +396,7 @@ ipc_msg_get_signature() {
 
 	local signature
 
-	if ! signature=$(_ipc_msg_get "$msg" "signature"); then
+	if ! signature=$(_ipc_get "$msg" "signature"); then
 		return 1
 	fi
 
@@ -352,7 +410,7 @@ ipc_msg_get_signer_name() {
 	local info
 	local fields
 
-	if ! info=$(_ipc_msg_get_signature_info "$msg"); then
+	if ! info=$(_ipc_envelope_get_signature_info "$msg"); then
 		return 1
 	fi
 
@@ -367,7 +425,7 @@ ipc_msg_get_signer_email() {
 	local info
 	local fields
 
-	if ! info=$(_ipc_msg_get_signature_info "$msg"); then
+	if ! info=$(_ipc_envelope_get_signature_info "$msg"); then
 		return 1
 	fi
 
@@ -383,7 +441,7 @@ ipc_msg_get_signer_key() {
 	local info
 	local fields
 
-	if ! info=$(_ipc_msg_get_signature_info "$msg"); then
+	if ! info=$(_ipc_envelope_get_signature_info "$msg"); then
 		return 1
 	fi
 
