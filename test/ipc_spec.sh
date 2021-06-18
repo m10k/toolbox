@@ -1,4 +1,20 @@
-#shellcheck sh=bash
+#!/bin/bash
+
+# ipc_spec.sh - Test cases for the toolbox ipc module
+# Copyright (C) 2021 Matthias Kruk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 . toolbox.sh
 include "ipc"
@@ -182,4 +198,149 @@ EOF
     The status should equal 0
     The output should start with "gpg: "
   End
+
+  It "_ipc_verify() does not verify tampered data"
+    _test_ipc_verify_invalid_data() {
+	    local data
+	    local signature
+
+	    data=$(dd if=/dev/urandom bs=1024 count=1024 2>/dev/null | _ipc_encode)
+
+	    if ! signature=$(_ipc_sign "$data"); then
+		    return 1
+	    fi
+
+	    if _ipc_verify "invalid$data" "$signature"; then
+		    return 1
+	    fi
+
+	    return 0
+    }
+
+    When call _test_ipc_verify_invalid_data
+    The status should equal 0
+    The output should start with "gpg: "
+  End
+End
+
+Describe "Message"
+  setup() {
+	  if ! mkdir "/tmp/test.$$"; then
+		  return 1
+	  fi
+
+	  if ! chmod 700 "/tmp/test.$$"; then
+		  rmdir "/tmp/test.$$"
+		  return 1
+	  fi
+
+	  export GNUPGHOME="/tmp/test.$$"
+
+	  cat <<EOF > "/tmp/test.$$/batch.gpgscript"
+%no-protection
+Key-Type: RSA
+Key-Length: 4096
+Key-Usage: sign,auth
+Subkey-Type: RSA
+Subkey-Length: 4096A
+Name-Real: Toolbox Test
+Name-Comment: Test
+Name-Email: test@m10k.eu
+Expire-Date: 1d
+EOF
+
+	  if ! gpg --batch --homedir "/tmp/test.$$" \
+	           --generate-key "/tmp/test.$$/batch.gpgscript" 2>/dev/null; then
+		  return 1
+	  fi
+
+	  return 0
+  }
+
+  cleanup() {
+	  rm -rf "/tmp/test.$$"
+  }
+
+  BeforeAll 'setup'
+  AfterAll 'cleanup'
+
+  It "_ipc_msg_new() outputs base64 encoded data"
+    _test_ipc_msg_new_is_base64() {
+	    local msg
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    if ! is_base64 "$msg"; then
+		    return 1
+	    fi
+
+	    return 0
+    }
+
+    When call _test_ipc_msg_new_is_base64
+    The status should equal 0
+  End
+
+  It "_ipc_msg_new() outputs an encoded JSON object"
+    _test_ipc_msg_new_is_json() {
+	    local msg
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    if ! _ipc_decode <<< "$msg" | jq -r -e . ; then
+		    return 1
+	    fi
+
+	    return 0
+    }
+
+    When call _test_ipc_msg_new_is_json
+    The status should equal 0
+    The stdout should match pattern '{*"message": "*",*"signature": "*"*}'
+    The stderr should not start with "parse error"
+  End
+
+  It "_ipc_msg_new() generates valid toolbox.ipc.envelope objects"
+    _test_ipc_msg_new_json_schema_envelope() {
+	    local msg
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    if ! ../spec/validate.py ../spec/ipc_envelope.schema.json <(_ipc_decode "$msg"); then
+		    return 1
+	    fi
+
+	    return 0
+    }
+
+    When call _test_ipc_msg_new_json_schema_envelope
+    The status should equal 0
+  End
+
+  It "_ipc_msg_new() messages contain valid toolbox.ipc.message objects"
+    _test_ipc_msg_new_json_schema_message() {
+	    local msg
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    if ! ../spec/validate.py ../spec/ipc_message.schema.json \
+		 <(_ipc_get "$msg" "message" | _ipc_decode); then
+		    return 1
+	    fi
+
+	    return 0
+    }
+
+    When call _test_ipc_msg_new_json_schema_message
+    The status should equal 0
+  End
+
 End
