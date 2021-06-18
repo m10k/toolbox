@@ -343,4 +343,163 @@ EOF
     The status should equal 0
   End
 
+  It "_ipc_msg_new()/ipc_msg_get_version() sets/gets the correct version"
+    _test_ipc_msg_new_version() {
+	    local msg
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    ipc_msg_get_version "$msg"
+    }
+
+    When call _test_ipc_msg_new_version
+    The status should equal 0
+    The stdout should equal "$__ipc_version"
+  End
+
+  It "_ipc_msg_new()/ipc_msg_get_user() sets/gets the correct user"
+
+    _test_ipc_msg_new_user() {
+	    local msg
+
+	    msg=$(_ipc_msg_new "from" "to" "data")
+
+	    ipc_msg_get_user "$msg"
+    }
+
+    When call _test_ipc_msg_new_user
+    The status should equal 0
+    The stdout should equal "$USER"
+  End
+
+  It "_ipc_msg_new()/ipc_msg_get_timestamp() sets/gets the correct timestamp"
+    _test_ipc_msg_new_timestamp() {
+	    local before
+	    local after
+	    local msg
+	    local timestamp
+
+	    before=$(date +"%s")
+	    msg=$(_ipc_msg_new "from" "to" "data")
+	    after=$(date +"%s")
+
+	    timestamp=$(ipc_msg_get_timestamp "$msg")
+
+	    if ! (( before <= timestamp )); then
+		    return 1
+	    fi
+
+	    if ! (( after >= timestamp )); then
+		    return 1
+	    fi
+
+	    return 0
+    }
+
+    When call _test_ipc_msg_new_timestamp
+    The status should equal 0
+  End
+
+  It "_ipc_msg_new()/ipc_msg_get_source() sets/gets the correct source"
+    _test_ipc_msg_new_source() {
+	    local msg
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    ipc_msg_get_source "$msg"
+    }
+
+    When call _test_ipc_msg_new_source
+    The status should equal 0
+    The stdout should equal "from"
+  End
+
+  It "_ipc_msg_new()/ipc_msg_get_destination() sets/gets the correct destination"
+    _test_ipc_msg_new_destination() {
+	    local msg
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    ipc_msg_get_destination "$msg"
+    }
+
+    When call _test_ipc_msg_new_destination
+    The status should equal 0
+    The stdout should equal "to"
+  End
+
+  It "_ipc_msg_new()/ipc_msg_get_data() sets/gets the correct data"
+    _test_ipc_msg_new_data() {
+	    local msg
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    ipc_msg_get_data "$msg"
+    }
+
+    When call _test_ipc_msg_new_data
+    The status should equal 0
+    The stdout should equal "data"
+  End
+
+  It "ipc_msg_get_signer_name() returns the correct name"
+    _test_ipc_msg_get_signer_name() {
+	    local msg
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    ipc_msg_get_signer_name "$msg"
+    }
+
+    When call _test_ipc_msg_get_signer_name
+    The status should equal 0
+    The stdout should equal "Toolbox Test (Test)"
+  End
+
+  It "ipc_msg_get_signer_email() returns the correct email"
+    _test_ipc_msg_get_signer_email() {
+	    local msg
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    ipc_msg_get_signer_email "$msg"
+    }
+
+    When call _test_ipc_msg_get_signer_email
+    The status should equal 0
+    The stdout should equal "test@m10k.eu"
+  End
+
+  It "ipc_msg_get_signer_key() returns the correct key"
+    _test_ipc_msg_get_signer_key() {
+	    local msg
+	    local key
+
+	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+		    return 1
+	    fi
+
+	    if ! key=$(ipc_msg_get_signer_key "$msg"); then
+		    return 1
+	    fi
+
+	    gpg --armor --export --local-user "$key"
+    }
+
+    When call _test_ipc_msg_get_signer_key
+    The status should equal 0
+    The stdout should start with "-----BEGIN PGP PUBLIC KEY BLOCK-----"
+  End
 End
