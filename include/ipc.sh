@@ -591,7 +591,7 @@ ipc_endpoint_recv() {
 		fi
 
 		if msg=$(_ipc_endpoint_get "$endpoint" "$remaining"); then
-			if _ipc_msg_validate "$msg"; then
+			if ipc_msg_validate "$msg"; then
 				echo "$msg"
 				return 0
 			fi
