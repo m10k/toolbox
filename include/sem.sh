@@ -191,6 +191,10 @@ sem_wait() {
 	local counter
 	local err
 
+	if (( $# < 2 )); then
+		timeout=-1
+	fi
+
 	waitlock=$(_sem_get_waitlock "$name")
 	countlock=$(_sem_get_countlock "$name")
 	counter=$(_sem_get_counter "$name")

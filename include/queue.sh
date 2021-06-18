@@ -387,6 +387,10 @@ queue_get() {
 	local item
 	local err
 
+	if (( $# < 2 )); then
+		timeout=-1
+	fi
+
 	sem=$(_queue_get_sem "$queue")
 	mutex=$(_queue_get_mutex "$queue")
 	data=$(_queue_get_data "$queue")
