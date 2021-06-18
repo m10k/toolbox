@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 
 # is.sh - ctype-style functions for Toolbox
 # Copyright (C) 2021 Matthias Kruk
@@ -38,6 +38,23 @@ is_hex() {
 	str="$1"
 
 	if [[ "$str" =~ ^[0-9a-fA-F]+$ ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
+is_base64() {
+	local str="$1"
+
+	# The length must be a multiple of 4 and there
+	# must not be more than two bytes of padding.
+
+	if (( ${#str} % 4 != 0 )); then
+		return 1
+	fi
+
+	if [[ "$str" =~ ^[a-zA-Z0-9+/]+[=]{,2}$ ]]; then
 		return 0
 	fi
 
