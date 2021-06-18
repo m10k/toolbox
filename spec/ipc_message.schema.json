@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://m10k.eu/toolbox/ipc.msg.json",
+    "$id": "https://m10k.eu/toolbox/ipc.message.json",
     "title": "Toolbox IPC Base message",
     "description": "The base type for toolbox IPC messages",
     "type": "object",
