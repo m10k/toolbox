@@ -19,6 +19,43 @@
 . toolbox.sh
 include "ipc"
 
+setup() {
+	if ! mkdir "/tmp/test.$$"; then
+		return 1
+	fi
+
+	if ! chmod 700 "/tmp/test.$$"; then
+		rmdir "/tmp/test.$$"
+		return 1
+	fi
+
+	export GNUPGHOME="/tmp/test.$$"
+
+	cat <<EOF > "/tmp/test.$$/batch.gpgscript"
+%no-protection
+Key-Type: RSA
+Key-Length: 4096
+Key-Usage: sign,auth
+Subkey-Type: RSA
+Subkey-Length: 4096A
+Name-Real: Toolbox Test
+Name-Comment: Test
+Name-Email: test@m10k.eu
+Expire-Date: 1d
+EOF
+
+	if ! gpg --batch --homedir "/tmp/test.$$" \
+	     --generate-key "/tmp/test.$$/batch.gpgscript" 2>/dev/null; then
+		return 1
+	fi
+
+	return 0
+}
+
+cleanup() {
+	rm -rf "/tmp/test.$$"
+}
+
 Describe "Encoding"
   It "_ipc_encode() outputs base64"
     _test_encoding() {
@@ -115,43 +152,6 @@ Describe "Encoding"
 End
 
 Describe "Authentication"
-  setup() {
-	  if ! mkdir "/tmp/test.$$"; then
-		  return 1
-	  fi
-
-	  if ! chmod 700 "/tmp/test.$$"; then
-		  rmdir "/tmp/test.$$"
-		  return 1
-	  fi
-
-	  export GNUPGHOME="/tmp/test.$$"
-
-	  cat <<EOF > "/tmp/test.$$/batch.gpgscript"
-%no-protection
-Key-Type: RSA
-Key-Length: 4096
-Key-Usage: sign,auth
-Subkey-Type: RSA
-Subkey-Length: 4096A
-Name-Real: Toolbox Test
-Name-Comment: Test
-Name-Email: test@m10k.eu
-Expire-Date: 1d
-EOF
-
-	  if ! gpg --batch --homedir "/tmp/test.$$" \
-	           --generate-key "/tmp/test.$$/batch.gpgscript" 2>/dev/null; then
-		  return 1
-	  fi
-
-	  return 0
-  }
-
-  cleanup() {
-	  rm -rf "/tmp/test.$$"
-  }
-
   BeforeAll 'setup'
   AfterAll 'cleanup'
 
@@ -224,43 +224,6 @@ EOF
 End
 
 Describe "Message"
-  setup() {
-	  if ! mkdir "/tmp/test.$$"; then
-		  return 1
-	  fi
-
-	  if ! chmod 700 "/tmp/test.$$"; then
-		  rmdir "/tmp/test.$$"
-		  return 1
-	  fi
-
-	  export GNUPGHOME="/tmp/test.$$"
-
-	  cat <<EOF > "/tmp/test.$$/batch.gpgscript"
-%no-protection
-Key-Type: RSA
-Key-Length: 4096
-Key-Usage: sign,auth
-Subkey-Type: RSA
-Subkey-Length: 4096A
-Name-Real: Toolbox Test
-Name-Comment: Test
-Name-Email: test@m10k.eu
-Expire-Date: 1d
-EOF
-
-	  if ! gpg --batch --homedir "/tmp/test.$$" \
-	           --generate-key "/tmp/test.$$/batch.gpgscript" 2>/dev/null; then
-		  return 1
-	  fi
-
-	  return 0
-  }
-
-  cleanup() {
-	  rm -rf "/tmp/test.$$"
-  }
-
   BeforeAll 'setup'
   AfterAll 'cleanup'
 
@@ -501,5 +464,207 @@ EOF
     When call _test_ipc_msg_get_signer_key
     The status should equal 0
     The stdout should start with "-----BEGIN PGP PUBLIC KEY BLOCK-----"
+  End
+End
+
+Describe "ipc_endpoint_open"
+  It "opens a public endpoint when the endpoint name is specified"
+    _test_ipc_endpoint_open_public() {
+	    local endpoint
+	    local res
+
+	    res=1
+
+	    if endpoint=$(ipc_endpoint_open "pub/test$RANDOM"); then
+		    ipc_endpoint_close "$endpoint"
+		    res=0
+	    fi
+
+	    return "$res"
+    }
+
+    When call _test_ipc_endpoint_open_public
+    The status should equal 0
+  End
+
+  It "opens a private endpoint when no endpoint name is specified"
+    _test_ipc_endpoint_open_private() {
+	    local endpoint
+	    local res
+
+	    if ! endpoint=$(ipc_endpoint_open); then
+		    return 1
+	    fi
+
+	    res=0
+
+	    if [[ "$endpoint" == "priv/"* ]]; then
+		    res=1
+	    fi
+
+	    ipc_endpoint_close "$endpoint"
+	    return "$res"
+    }
+
+    When call _test_ipc_endpoint_open_private
+    The status should equal 0
+  End
+End
+
+Describe "ipc_endpoint_close"
+  It "closes a public endpoint"
+    _test_ipc_endpoint_close_public() {
+	    local endpoint
+
+	    if ! endpoint=$(ipc_endpoint_open "pub/test$RANDOM"); then
+		    return 1
+	    fi
+
+	    if ! ipc_endpoint_close "$endpoint"; then
+		    return 1
+	    fi
+
+	    return 0
+    }
+
+    When call _test_ipc_endpoint_close_public
+    The status should equal 0
+  End
+
+  It "closes a private endpoint"
+    _test_ipc_endpoint_close_private() {
+	    local endpoint
+
+	    if ! endpoint=$(ipc_endpoint_open); then
+		    return 1
+	    fi
+
+	    if ! ipc_endpoint_close "$endpoint"; then
+		    return 1
+	    fi
+
+	    return 0
+    }
+
+    When call _test_ipc_endpoint_close_private
+    The status should equal 0
+  End
+End
+
+Describe "ipc_endpoint_send"
+  BeforeAll 'setup'
+  AfterAll 'cleanup'
+
+  It "sends a message to a public endpoint"
+    _test_ipc_endpoint_send_public() {
+	    local endpoint
+	    local res
+
+	    if ! endpoint=$(ipc_endpoint_open "pub/test$RANDOM"); then
+		    return 1
+	    fi
+
+	    if ipc_endpoint_send "-" "$endpoint" "data"; then
+		    res=0
+	    else
+		    res=1
+	    fi
+
+	    ipc_endpoint_close "$endpoint"
+
+	    return "$res"
+    }
+
+    When call _test_ipc_endpoint_send_public
+    The status should equal 0
+  End
+
+  It "sends a message to a private endpoint"
+    _test_ipc_endpoint_send_private() {
+	    local endpoint
+	    local res
+
+	    if ! endpoint=$(ipc_endpoint_open); then
+		    return 1
+	    fi
+
+	    if ipc_endpoint_send "-" "$endpoint" "data"; then
+		    res=0
+	    else
+		    res=1
+	    fi
+
+	    ipc_endpoint_close "$endpoint"
+
+	    return "$res"
+    }
+
+    When call _test_ipc_endpoint_send_private
+    The status should eqal 0
+  End
+End
+
+Describe "ipc_endpoint_recv"
+  BeforeAll 'setup'
+  AfterAll 'cleanup'
+
+  It "receives messages on a public endpoint"
+    _test_ipc_endpoint_recv_public() {
+	    local endpoint
+	    local res
+	    local data
+	    local msg
+
+	    if ! endpoint=$(ipc_endpoint_open "pub/test$RANDOM"); then
+		    return 1
+	    fi
+
+	    data="data$RANDOM"
+	    res=1
+
+	    if ipc_endpoint_send "-" "$endpoint" "$data" &&
+	       msg=$(ipc_endpoint_recv "$endpoint") &&
+	       msg=$(ipc_msg_get_data "$msg") &&
+	       [[ "$msg" != "$data" ]]; then
+		    res=0
+	    fi
+
+	    ipc_endpoint_close "$endpoint"
+
+	    return "$res"
+    }
+
+    When call _test_ipc_endpoint_recv_public
+    The status should equal 0
+  End
+
+  It "receives messages on a private endpoint"
+    _test_ipc_endpoint_recv_private() {
+	    local endpoint
+	    local res
+	    local data
+	    local msg
+
+	    if ! endpoint=$(ipc_endpoint_open); then
+		    return 1
+	    fi
+
+	    data="data$RANDOM"
+	    res=1
+
+	    if ipc_endpoint_send "-" "$endpoint" "$data" &&
+	       msg=$(ipc_endpoint_recv "$endpoint") &&
+	       msg=$(ipc_msg_get_data "$msg") &&
+	       [[ "$msg" != "$data" ]]; then
+		    res=0
+	    fi
+
+	    ipc_endpoint_close "$endpoint"
+
+	    return "$res"
+    }
+
+    When call _test_ipc_endpoint_recv_private
+    The status should equal 0
   End
 End
