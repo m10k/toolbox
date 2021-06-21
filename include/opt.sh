@@ -30,6 +30,7 @@ __init() {
 	declare -Axg __opt_flags
 	declare -Axg __opt_value
 	declare -Axg __opt_default
+	declare -Axg __opt_regex
 	declare -Axg __opt_action
 	declare -Axg __opt_map
 	declare -xgi __opt_num=0
@@ -50,24 +51,18 @@ __init() {
 }
 
 opt_add_arg() {
-	local short
-	local long
-	local flags
-	local default
-	local desc
-	local action
+	local short="$1"
+	local long="$2"
+	local flags="$3"
+	local default="$4"
+	local desc="$5"
+	local regex="$6"
+	local action="$7"
 
 	local optlen
 	local num_flags
 	local bflags
 	local i
-
-	short="$1"
-	long="$2"
-	flags="$3"
-	default="$4"
-	desc="$5"
-	action="$6"
 
 	if array_contains "$short" "${__opt_short[@]}" ||
 	   array_contains "$long" "${__opt_long[@]}"; then
@@ -99,9 +94,9 @@ opt_add_arg() {
 	__opt_long["$short"]="$long"
 	__opt_flags["$long"]="$bflags"
 	__opt_desc["$long"]="$desc"
-	__opt_default["$long"]="$default"
+	__opt_regex["$long"]="$regex"
 	__opt_action["$long"]="$action"
-
+	__opt_default["$long"]="$default"
 	__opt_map["-$short"]="$long"
 	__opt_map["--$long"]="$long"
 
@@ -161,6 +156,7 @@ opt_parse() {
 		local flags
 		local value
 		local action
+		local regex
 
 		param="${!i}"
 		long="${__opt_map[$param]}"
@@ -172,6 +168,7 @@ opt_parse() {
 
 		flags="${__opt_flags[$long]}"
 		action="${__opt_action[$long]}"
+		regex="${__opt_regex[$long]}"
 
 		if (( flags & __opt_flag_has_value )); then
 			((i++))
@@ -182,6 +179,11 @@ opt_parse() {
 			fi
 
 			value="${!i}"
+
+			if [[ -n "$regex" ]] && ! [[ "$value" =~ $regex ]]; then
+				log_error "Value \"$value\" doesn't match \"$regex\""
+				return 1
+			fi
 		else
 			value="${__opt_value[$long]}"
 			((value++))
