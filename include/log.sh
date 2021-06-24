@@ -124,7 +124,7 @@ log_stacktrace() {
 	for (( i = "${#FUNCNAME[@]}"; i > 1; )); do
 		((i--))
 		echo "$indent${BASH_SOURCE[$i]}:${BASH_LINENO[$i]} ${FUNCNAME[$i]}"
-		ident+=" "
+		indent+=" "
 	done
 
 	return 0
