@@ -80,7 +80,7 @@ log_decrease_verbosity() {
 	return 0
 }
 
-log_write() {
+_log_write() {
 	local level="$1"
 	local prefix="$2"
 
@@ -107,7 +107,7 @@ log_write() {
 		done
 	else
 		while read -r line; do
-			log_write "$level" "$prefix" "$line"
+			_log_write "$level" "$prefix" "$line"
 		done
 	fi
 
@@ -154,23 +154,23 @@ log_debug() {
 
 	dbgtag="${BASH_SOURCE[1]}:${BASH_LINENO[1]} ${FUNCNAME[1]}:"
 
-	log_write "$__log_debug" "[DBG] $dbgtag" "${lines[@]}"
+	_log_write "$__log_debug" "[DBG] $dbgtag" "${lines[@]}"
 }
 
 log_info() {
 	local lines=("$@")
 
-	log_write "$__log_info" "[INF]" "${lines[@]}"
+	_log_write "$__log_info" "[INF]" "${lines[@]}"
 }
 
 log_warn() {
 	local lines=("$@")
 
-	log_write "$__log_warning" "[WRN]" "${lines[@]}"
+	_log_write "$__log_warning" "[WRN]" "${lines[@]}"
 }
 
 log_error() {
 	local lines=("$@")
 
-	log_write "$__log_error" "[ERR]" "${lines[@]}"
+	_log_write "$__log_error" "[ERR]" "${lines[@]}"
 }
