@@ -34,11 +34,8 @@ __init() {
 }
 
 _iruca_get() {
-	local token
-	local url
-
-	token="$1"
-	url="$2"
+	local token="$1"
+	local url="$2"
 
 	if ! curl --silent --location \
 	     --header "X-Iruca-Token: $token" \
@@ -50,13 +47,9 @@ _iruca_get() {
 }
 
 _iruca_put() {
-	local token
-	local url
-	local data
-
-	token="$1"
-	url="$2"
-	data="$3"
+	local token="$1"
+	local url="$2"
+	local data="$3"
 
 	if ! curl --silent --location -X PUT \
 	     --header "X-Iruca-Token: $token" \
@@ -69,13 +62,10 @@ _iruca_put() {
 }
 
 iruca_list_members() {
-	local token
-	local room
+	local token="$1"
+	local room="$2"
 
 	local url
-
-	token="$1"
-	room="$2"
 
 	url="$__iruca_url/rooms/$room/members"
 
@@ -87,15 +77,11 @@ iruca_list_members() {
 }
 
 iruca_get_status() {
-	local token
-	local room
-	local member
+	local token="$1"
+	local room="$2"
+	local member="$3"
 
 	local url
-
-	token="$1"
-	room="$2"
-	member="$3"
 
 	url="$__iruca_url/rooms/$room/members/$member"
 
@@ -107,11 +93,9 @@ iruca_get_status() {
 }
 
 _iruca_status_is_valid() {
-	local status
+	local status="$1"
 
 	local valid_states
-
-	status="$1"
 
 	valid_states=(
 		"$__iruca_state_present"
@@ -130,20 +114,14 @@ _iruca_status_is_valid() {
 }
 
 iruca_set_status() {
-	local token
-	local room
-	local member
-	local status
-	local message
+	local token="$1"
+	local room="$2"
+	local member="$3"
+	local status="$4"
+	local message="$5"
 
 	local url
 	local data
-
-	token="$1"
-	room="$2"
-	member="$3"
-	status="$4"
-	message="$5"
 
 	if ! _iruca_status_is_valid "$status"; then
 		return 1

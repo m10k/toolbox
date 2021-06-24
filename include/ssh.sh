@@ -37,15 +37,11 @@ _ssh_get_socket_dir() {
 }
 
 _ssh_tunnel_ctrl_socket_name() {
-	local host
-	local port
-	local lport
+	local host="$1"
+	local port="$2"
+	local lport="$3"
 
 	local sockdir
-
-	host="$1"
-	port="$2"
-	lport="$3"
 
 	if ! sockdir=$(_ssh_get_socket_dir); then
 		return 1
@@ -56,13 +52,10 @@ _ssh_tunnel_ctrl_socket_name() {
 }
 
 _ssh_proxy_ctrl_socket_name() {
-	local host
-	local port
+	local host="$1"
+	local port="$2"
 
 	local sockdir
-
-	host="$1"
-	port="$2"
 
 	if ! sockdir=$(_ssh_get_socket_dir); then
 		return 1

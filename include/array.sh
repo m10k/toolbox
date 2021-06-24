@@ -21,13 +21,10 @@ __init() {
 }
 
 array_contains() {
-	local needle
-	local haystack
+	local needle="$1"
+	local haystack=("${@:2}")
 
 	local cur
-
-	needle="$1"
-	haystack=("${@:2}")
 
 	for cur in "${haystack[@]}"; do
 		if [[ "$needle" == "$cur" ]]; then
@@ -39,13 +36,16 @@ array_contains() {
 }
 
 array_to_lines() {
+	local array=("$@")
 	local item
 
-	for item in "$@"; do
+	for item in "${array[@]}"; do
 		echo "$item"
 	done
 }
 
 array_sort() {
-	array_to_lines "$@" | sort -V
+	local array=("$@")
+
+	array_to_lines "${array[@]}" | sort -V
 }

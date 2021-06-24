@@ -25,19 +25,14 @@ __init() {
 }
 
 _gitlab_urlencode() {
-        local str
-
-        str="$1"
+        local str="$1"
 
         echo "${str//\//%2F}"
 }
 
 _gitlab_get() {
-        local token
-        local url
-
-	token="$1"
-	url="$2"
+        local token="$1"
+        local url="$2"
 
         if ! curl --silent --location -X GET \
 	     --header "Private-Token: $token" "$url"; then
@@ -48,13 +43,9 @@ _gitlab_get() {
 }
 
 _gitlab_post() {
-        local token
-        local url
-        local data
-
-        token="$1"
-        url="$2"
-        data="$3"
+        local token="$1"
+        local url="$2"
+        local data="$3"
 
         if ! curl --silent --location -X POST \
              --header "Private-Token: $token" \
@@ -79,16 +70,12 @@ _gitlab_put() {
 }
 
 gitlab_import_status() {
-	local host
-        local token
-        local project
+	local host="$1"
+	local token="$2"
+	local project="$3"
 
         local url
         local res
-
-	host="$1"
-        token="$2"
-        project="$3"
 
         id=$(_gitlab_urlencode "$project")
         url="$host/api/v4/projects/$id"
@@ -102,19 +89,13 @@ gitlab_import_status() {
 }
 
 gitlab_download_file() {
-	local host
-	local token
-	local project
-	local branch
-	local file
+	local host="$1"
+	local token="$2"
+	local project="$3"
+	local branch="$4"
+	local file="$5"
 
 	local url
-
-	host="$1"
-	token="$2"
-	project="$3"
-	branch="$4"
-	file="$5"
 
 	project=$(_gitlab_urlencode "$project")
 	file=$(_gitlab_urlencode "$file")
@@ -128,13 +109,10 @@ gitlab_download_file() {
 }
 
 gitlab_get_users() {
-	local host
-	local token
+	local host="$1"
+	local token="$2"
 
 	local url
-
-	host="$1"
-	token="$2"
 
 	url="$host/api/v4/users?per_page=512"
 
@@ -146,13 +124,10 @@ gitlab_get_users() {
 }
 
 gitlab_user_list() {
-	local host
-	local token
+	local host="$1"
+	local token="$2"
 
 	local resp
-
-	host="$1"
-	token="$2"
 
 	if ! resp=$(gitlab_get_users "$host" "$token"); then
 		return 1
@@ -178,18 +153,14 @@ gitlab_get_current_user() {
 }
 
 gitlab_get_user_id() {
-	local host
-	local token
-	local user
+	local host="$1"
+	local token="$2"
+	local user="$3"
 
 	local resp
 	local uid
 	local username
 	local fullname
-
-	host="$1"
-	token="$2"
-	user="$3"
 
 	if ! resp=$(gitlab_user_list "$host" "$token"); then
 		return 1
@@ -273,20 +244,14 @@ gitlab_fork_sync() {
 }
 
 gitlab_create_branch() {
-	local host
-	local token
-	local project
-	local branch
-	local ref
+	local host="$1"
+	local token="$2"
+	local project="$3"
+	local branch="$4"
+	local ref="$5"
 
 	local id
 	local url
-
-	host="$1"
-	token="$2"
-	project="$3"
-	branch="$4"
-        ref="$5"
 
 	id=$(_gitlab_urlencode "$project")
 	data=$(json_make "id" "$id" "branch" "$branch" "ref" "$ref")
@@ -300,16 +265,12 @@ gitlab_create_branch() {
 }
 
 gitlab_project_get_branches() {
-	local host
-	local token
-	local project
+	local host="$1"
+	local token="$2"
+	local project="$3"
 
 	local url
 	local resp
-
-	host="$1"
-	token="$2"
-	project="$3"
 
 	project=$(_gitlab_urlencode "$project")
 	url="$host/api/v4/projects/$project/repository/branches"
@@ -465,16 +426,12 @@ gitlab_project_merge_merge_request() {
 }
 
 gitlab_get_project_id() {
-	local host
-	local token
-	local project
+	local host="$1"
+	local token="$2"
+	local project="$3"
 
 	local url
 	local resp
-
-	host="$1"
-	token="$2"
-	project="$3"
 
 	project=$(_gitlab_urlencode "$project")
 	url="$host/api/v4/projects/$project"
@@ -488,18 +445,13 @@ gitlab_get_project_id() {
 }
 
 gitlab_list_projects_page() {
-	local host
-	local token
-	local perpage
-	local page
+	local host="$1"
+	local token="$2"
+	local perpage="$3"
+	local page="$4"
 
 	local url
 	local results
-
-	host="$1"
-	token="$2"
-	perpage="$3"
-	page="$4"
 
 	url="$host/api/v4/projects?simple=true&per_page=$perpage&page=$page"
 
@@ -513,14 +465,11 @@ gitlab_list_projects_page() {
 }
 
 gitlab_list_projects() {
-	local host
-	local token
+	local host="$1"
+	local token="$2"
 
 	local page
 	local perpage
-
-	host="$1"
-	token="$2"
 
 	page=1
 	perpage=50
@@ -564,13 +513,13 @@ gitlab_list_projects() {
 #  respectively.
 #
 gitlab_merge_request() {
-	local host
-	local token
-	local source
-	local destination
-	local title
-	local assignee
-	local description
+	local host="$1"
+	local token="$2"
+	local source="$3"
+	local destination="$4"
+	local title="$5"
+	local assignee="$6"
+	local description="$7"
 
 	local source_name
 	local destination_name
@@ -580,14 +529,6 @@ gitlab_merge_request() {
 	local destination_branch
 	local assignee_id
 	local url
-
-	host="$1"
-	token="$2"
-	source="$3"
-	destination="$4"
-	title="$5"
-	assignee="$6"
-	description="$7"
 
 	source_name="${source%:*}"
 	destination_name="${destination%:*}"

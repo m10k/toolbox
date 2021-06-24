@@ -25,20 +25,20 @@ __init() {
 }
 
 json_object() {
-        local argc
+	local args=("$@")
+
         local i
         local nvps
 
-        argc="$#"
         nvps=0
 
-        if (( argc % 2 != 0 )); then
+        if (( ${#args[@]} % 2 != 0 )); then
                 log_error "Invalid number of arguments"
                 return 1
         fi
 
         printf "{"
-        for (( i = 1; i <= argc; i++ )); do
+        for (( i = 0; i < ${#args[@]}; i++ )); do
                 local name
                 local value
 
@@ -50,9 +50,9 @@ json_object() {
 		re_object='^\{.*\}$'
 		re_array='^\[.*\]$'
 
-                name="${!i}"
+                name="${args[$i]}"
                 ((i++))
-                value="${!i}"
+                value="${args[$i]}"
 
                 if [ -z "$name" ] || [ -z "$value" ]; then
                         continue
@@ -81,6 +81,8 @@ json_object() {
 }
 
 json_array() {
+	local args=("$@")
+
 	local arg
 	local n
 
@@ -95,7 +97,7 @@ json_array() {
 	printf "["
 	n=0
 
-	for arg in "$@"; do
+	for arg in "${args[@]}"; do
 		if [ -z "$arg" ]; then
 			continue
 		fi

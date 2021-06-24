@@ -43,9 +43,7 @@ __init() {
 }
 
 log_set_verbosity() {
-	local verb
-
-	verb="$1"
+	local verb="$1"
 
 	if (( verb < __log_error )); then
 		verb="$__log_error"
@@ -83,12 +81,10 @@ log_decrease_verbosity() {
 }
 
 log_write() {
-	local level
-	local prefix
-	local line
+	local level="$1"
+	local prefix="$2"
 
-	level="$1"
-	prefix="$2"
+	local line
 
 	if (( __log_verbosity < level )); then
 		return 0
@@ -135,15 +131,14 @@ log_stacktrace() {
 }
 
 log_highlight() {
-	local tag
-
-	tag="$1"
+	local tag="$1"
+	local lines=("${@:2}")
 
 	echo "===== BEGIN $tag ====="
-	if (( $# > 1 )); then
+	if (( ${#lines[@]} > 1 )); then
 		local arg
 
-		for arg in "${@:2}"; do
+		for arg in "${lines[@]}"; do
 			echo "$arg"
 		done
 	else
@@ -153,22 +148,29 @@ log_highlight() {
 }
 
 log_debug() {
+	local lines=("$@")
+
 	local dbgtag
-	local line
 
 	dbgtag="${BASH_SOURCE[1]}:${BASH_LINENO[1]} ${FUNCNAME[1]}:"
 
-	log_write "$__log_debug" "[DBG] $dbgtag" "$@"
+	log_write "$__log_debug" "[DBG] $dbgtag" "${lines[@]}"
 }
 
 log_info() {
-	log_write "$__log_info" "[INF]" "$@"
+	local lines=("$@")
+
+	log_write "$__log_info" "[INF]" "${lines[@]}"
 }
 
 log_warn() {
-	log_write "$__log_warning" "[WRN]" "$@"
+	local lines=("$@")
+
+	log_write "$__log_warning" "[WRN]" "${lines[@]}"
 }
 
 log_error() {
-	log_write "$__log_error" "[ERR]" "$@"
+	local lines=("$@")
+
+	log_write "$__log_error" "[ERR]" "${lines[@]}"
 }

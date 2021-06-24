@@ -145,15 +145,17 @@ opt_print_help() {
 }
 
 opt_parse() {
+	local argv=("$@")
+
 	local optname
 	local err
 	local i
 
-	declare -argx __opt_argv=("$@")
+	declare -argx __opt_argv=("${argv[@]}")
 
 	err=0
 
-	for (( i = 1; i <= $#; i++ )); do
+	for (( i = 0; i < ${#argv[@]}; i++ )); do
 		local param
 		local long
 		local flags
@@ -161,7 +163,7 @@ opt_parse() {
 		local action
 		local regex
 
-		param="${!i}"
+		param="${argv[$i]}"
 		long="${__opt_map[$param]}"
 
 		if [[ -z "$long" ]]; then
@@ -176,12 +178,12 @@ opt_parse() {
 		if (( flags & __opt_flag_has_value )); then
 			((i++))
 
-			if (( i > $# )); then
+			if (( i > ${#argv[@]} )); then
 				log_error "Missing argument after $param"
 				return 1
 			fi
 
-			value="${!i}"
+			value="${argv[$i]}"
 
 			if [[ -n "$regex" ]] && ! [[ "$value" =~ $regex ]]; then
 				log_error "Value \"$value\" doesn't match \"$regex\""
@@ -225,9 +227,7 @@ opt_parse() {
 }
 
 opt_get() {
-	local long
-
-	long="$1"
+	local long="$1"
 
 	if array_contains "$long" "${!__opt_value[@]}"; then
 		echo "${__opt_value[$long]}"

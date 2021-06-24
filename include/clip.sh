@@ -21,9 +21,7 @@ __init() {
 }
 
 clip_get() {
-	local sel
-
-	sel="$1"
+	local sel="$1"
 
 	if ! xclip -selection "$sel" -o 2>/dev/null; then
 		return 1
@@ -49,11 +47,8 @@ clip_get_any() {
 }
 
 clip_set() {
-	local sel
-	local data
-
-	sel="$1"
-	data="$2"
+	local sel="$1"
+	local data="$2"
 
 	if (( $# < 2 )); then
 		data=$(</dev/stdin)
@@ -67,13 +62,10 @@ clip_set() {
 }
 
 clip_swap() {
-	local left
-	local right
+	local left="$1"
+	local right="$2"
 
 	local left_data
-
-	left="$1"
-	right="$2"
 
         left_data=$(clip_get "$left")
 	clip_get "$right" | clip_set "$left"
