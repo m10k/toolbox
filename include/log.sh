@@ -135,7 +135,7 @@ log_highlight() {
 	local lines=("${@:2}")
 
 	echo "===== BEGIN $tag ====="
-	if (( ${#lines[@]} > 1 )); then
+	if (( ${#lines[@]} > 0 )); then
 		local arg
 
 		for arg in "${lines[@]}"; do
