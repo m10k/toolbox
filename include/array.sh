@@ -49,3 +49,47 @@ array_sort() {
 
 	array_to_lines "${array[@]}" | sort -V
 }
+
+array_same() {
+	local -n _array_same_left="$1"
+	local -n _array_same_right="$2"
+
+	local element
+
+	if (( ${#_array_same_left[@]} != ${#_array_same_right[@]} )); then
+		return 1
+	fi
+
+	for element in "${_array_same_left[@]}"; do
+		if ! array_contains "$element" "${_array_same_right[@]}"; then
+			return 1
+		fi
+	done
+
+	for element in "${_array_same_right[@]}"; do
+		if ! array_contains "$element" "${_array_same_left[@]}"; then
+			return 1
+		fi
+	done
+
+	return 0
+}
+
+array_identical() {
+	local -n _array_identical_left="$1"
+	local -n _array_identical_right="$2"
+
+	local i
+
+	if (( ${#_array_identical_left[@]} != ${#_array_identical_right[@]} )); then
+		return 1
+	fi
+
+	for (( i = 0; i < ${#_array_identical_left[@]}; i++ )); do
+		if [[ "${_array_identical_left[$i]}" != "${_array_identical_right[$i]}" ]]; then
+			return 1
+		fi
+	done
+
+	return 0
+}
