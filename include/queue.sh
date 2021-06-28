@@ -224,15 +224,19 @@ _queue_contains() {
 	local item="$2"
 
 	local data
-	local qdata
+	local qitem
 
 	data=$(_queue_get_data "$queue")
 
-	while read -r qdata; do
-		if [[ "$qdata" == "$data" ]]; then
+	if ! [ -f "$data" ]; then
+		return 1
+	fi
+
+	while read -r qitem; do
+		if [[ "$qitem" == "$item" ]]; then
 			return 0
 		fi
-	done
+	done < "$data"
 
 	return 1
 }
