@@ -287,26 +287,22 @@ queue_put_unique() {
 _queue_move_to_q() {
 	local queue="$1"
 	local filepath="$2"
-	local userdata="$3"
 
-	local filedir
 	local filename
-	local filename_enc
+	local filedir
 	local data
 	local dest
 
 	filedir=$(_queue_get_filedir "$queue")
 	data=$(_queue_get_data "$queue")
-
 	filename="${filepath##*/}"
-	filename_enc=$(base64 <<< "$filename")
 	dest="$filedir/$filename"
 
 	if ! cp -a "$filepath" "$dest"; then
 		return 1
 	fi
 
-	if ! echo "$filename_enc $userdata" >> "$data"; then
+	if ! echo "$filename" >> "$data"; then
 		log_error "Could not append to queue: $data"
 
 		if ! rm -rf "$dest"; then
@@ -326,9 +322,7 @@ _queue_move_to_q() {
 queue_put_file() {
 	local queue="$1"
 	local filepath="$2"
-	local userdata="${*:3}"
 
-	local userdata_enc
 	local mutex
 	local sem
 	local filedir
@@ -345,7 +339,6 @@ queue_put_file() {
 	mutex=$(_queue_get_mutex "$queue")
 	filedir=$(_queue_get_filedir "$queue")
 	sem=$(_queue_get_sem "$queue")
-	userdata_enc=$(base64 <<< "$userdata")
 
 	mutex_lock "$mutex"
 
@@ -360,7 +353,7 @@ queue_put_file() {
 			# Must not succeed if the file was already in the queue
 			err=1
 		else
-			if _queue_move_to_q "$queue" "$filepath" "$userdata_enc"; then
+			if _queue_move_to_q "$queue" "$filepath"; then
 				err=0
 			else
 				err=1
@@ -436,7 +429,6 @@ queue_get_file() {
 	local item
 	local dest
 	local err
-	local userdata
 
 	if ! [ -d "$destdir" ]; then
 		log_error "Destination must be a directory"
@@ -446,7 +438,6 @@ queue_get_file() {
 	sem=$(_queue_get_sem "$queue")
 	mutex=$(_queue_get_mutex "$queue")
 	data=$(_queue_get_data "$queue")
-	userdata=""
 
 	err=false
 
@@ -459,15 +450,8 @@ queue_get_file() {
 	if ! item=$(head -n 1 "$data" 2>/dev/null); then
 		err=true
 	else
-		local item_name
-		local src
-
-		# item has format "BASE64_STR BASE64_STR"
-		item_name=$(base64 --decode <<< "${item% *}")
-		userdata=$(base64 --decode <<< "${item#* }")
-		src="$(_queue_get_filedir "$queue")/$item_name"
-
-		dest="${destdir%/}/$item_name"
+		src="$(_queue_get_filedir "$queue")/$item"
+		dest="${destdir%/}/$item"
 
 		# The reason we remove the item from the list first is that
 		# it is much cheaper to put it back in case the move failed
@@ -514,7 +498,7 @@ queue_get_file() {
 		return 1
 	fi
 
-	echo "$dest $userdata"
+	echo "$dest"
 	return 0
 }
 
