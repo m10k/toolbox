@@ -702,21 +702,511 @@ Describe "queue_get()"
     The status should equal 0
   End
 
-  # FIXME: Add testcase to test queue_get() behavior when timeout > 0
-  # FIXME: Add testcase to test queue_get() behavior when timeout = 0
-  # FIXME: Add testcase to test queue_get() behavior when timeout = -1
+  It "blocks for specified amount of seconds if timeout > 0"
+    _test_queue_get_timeout_n() {
+	    local timeout
+	    local tmpdir
+	    local queue
+	    local err
+
+	    if ! tmpdir=$(mktemp -d); then
+		    return 1
+	    fi
+
+	    queue="$tmpdir/queue"
+	    timeout=5
+	    err=0
+
+	    if ! queue_init "$queue"; then
+		    err=2
+	    else
+		    local time_before
+		    local time_after
+		    local time_waited
+
+		    time_before=$(date +"%s")
+		    queue_get "$queue" "$timeout"
+		    time_after=$(date +"%s")
+
+		    time_waited=$((time_after - time_before))
+		    if (( time_waited > (timeout + 1) )); then
+			    err=3
+		    elif (( time_waited < timeout )); then
+			    err=4
+		    fi
+	    fi
+
+	    rm -rf "$tmpdir"
+	    return "$err"
+    }
+
+    When call _test_queue_get_timeout_n
+    The status should equal 0
+  End
+
+  It "does not block if timeout == 0"
+    _test_queue_get_timeout_zero() {
+	    local tmpdir
+	    local queue
+	    local err
+
+	    if ! tmpdir=$(mktemp -d); then
+		    return 1
+	    fi
+
+	    queue="$tmpdir/queue"
+	    err=0
+
+	    if ! queue_init "$queue"; then
+		    err=2
+
+	    else
+		    local time_before
+		    local time_after
+
+		    time_before=$(date +"%s")
+		    queue_get "$queue" 0
+		    time_after=$(date +"%s")
+
+		    if (( (time_after - time_before) > 0 )); then
+			    err=3
+		    fi
+	    fi
+
+	    rm -rf "$tmpdir"
+	    return "$err"
+    }
+
+    When call _test_queue_get_timeout_zero
+    The status should equal 0
+  End
+
+  It "blocks until a message arrives if timeout == -1"
+    _test_queue_get_timeout_negative() {
+	    local tmpdir
+	    local queue
+	    local err
+
+	    if ! tmpdir=$(mktemp -d); then
+		    return 1
+	    fi
+
+	    queue="$tmpdir/queue"
+	    err=0
+
+	    if ! queue_init "$queue"; then
+		    err=2
+
+	    else
+		    local delay
+
+		    for (( delay = 0; delay < 5; delay++ )); do
+			    local time_before
+			    local time_after
+			    local time_waited
+
+			    ( sleep "$delay"; queue_put "$queue" "hello world" ) &
+
+			    time_before=$(date +"%s")
+			    queue_get "$queue" -1 &> /dev/null
+			    time_after=$(date +"%s")
+
+			    time_waited=$((time_after - time_before))
+
+			    if (( time_waited < delay )); then
+				    err=3
+				    break
+			    fi
+
+			    # queue_put() and queue_get() may incur a delay of 1s each,
+			    # add bad scheduler timing and we need 3 seconds tolerance
+			    if (( (time_waited - delay) > 3 )); then
+				    err=4
+				    break
+			    fi
+		    done
+	    fi
+
+	    rm -rf "$tmpdir"
+	    return "$err"
+    }
+
+    When call _test_queue_get_timeout_negative
+    The status should equal 0
+  End
+
+  It "blocks until a message arrives if timeout is omitted"
+    _test_queue_get_timeout_omitted() {
+	    local tmpdir
+	    local queue
+	    local err
+
+	    if ! tmpdir=$(mktemp -d); then
+		    return 1
+	    fi
+
+	    queue="$tmpdir/queue"
+	    err=0
+
+	    if ! queue_init "$queue"; then
+		    err=2
+
+	    else
+		    local delay
+
+		    for (( delay = 0; delay < 5; delay++ )); do
+			    local time_before
+			    local time_after
+			    local time_waited
+
+			    ( sleep "$delay"; queue_put "$queue" "hello world" ) &
+
+			    time_before=$(date +"%s")
+			    queue_get "$queue" &> /dev/null
+			    time_after=$(date +"%s")
+
+			    time_waited=$((time_after - time_before))
+
+			    if (( time_waited < delay )); then
+				    err=3
+				    break
+			    fi
+
+			    if (( (time_waited - delay) > 3 )); then
+				    err=4
+				    break
+			    fi
+		    done
+	    fi
+
+	    rm -rf "$tmpdir"
+	    return "$err"
+    }
+
+    When call _test_queue_get_timeout_omitted
+    The status should equal 0
+  End
 
 End
 
-# Describe "queue_get_file()"
+Describe "queue_get_file()"
+  It "retrieves a file from the queue"
+    _test_queue_get_file() {
+	    local tmpdir
+	    local queue
+	    local file_sent
+	    local file_received
+	    local data_sent
+	    local data_received
+	    local err
 
-  # FIXME: Add testcase to test queue_get_file() primary behavior
-  # FIXME: Add testcase to test if queue_get_file() preserves the data order
-  # FIXME: Add testcase to test queue_get_file() behavior when timeout > 0
-  # FIXME: Add testcase to test queue_get_file() behavior when timeout = 0
-  # FIXME: Add testcase to test queue_get_file() behavior when timeout = -1
+	    if ! tmpdir=$(mktemp -d); then
+		    return 1
+	    fi
 
-# End
+	    data_sent="hello world"
+	    file_sent="$tmpdir/file"
+	    queue="$tmpdir/queue"
+	    err=0
+
+	    if ! queue_init "$queue"; then
+		    err=2
+
+	    elif ! echo "$data_sent" > "$file_sent"; then
+		    err=3
+
+	    elif ! queue_put_file "$queue" "$file_sent"; then
+		    err=4
+
+	    elif ! file_received=$(queue_get_file "$queue" "$tmpdir"); then
+		    err=5
+
+	    elif ! data_received=$(< "$file_received"); then
+		    err=6
+
+	    elif [[ "$data_received" != "$data_sent" ]]; then
+		    err=7
+	    fi
+
+	    rm -rf "$tmpdir"
+	    return "$err"
+    }
+
+    When call _test_queue_get_file
+    The status should equal 0
+  End
+
+  It "preserves the queue order"
+    _populate_queue() {
+	    local queue="$1"
+	    local tmpdir="$2"
+	    local -i items="$3"
+
+	    local i
+
+	    for (( i = 0; i < items; i++ )); do
+		    if ! echo "$i" > "$tmpdir/$i"; then
+			    return 1
+		    fi
+
+		    if ! queue_put_file "$queue" "$tmpdir/$i"; then
+			    return 1
+		    fi
+	    done
+
+	    return 0
+    }
+
+    _depopulate_queue() {
+	    local queue="$1"
+	    local tmpdir="$2"
+	    local -i items="$3"
+
+	    local i
+
+	    for (( i = 0; i < items; i++ )); do
+		    local file
+		    local data
+
+		    if ! file=$(queue_get_file "$queue" "$tmpdir"); then
+			    return 1
+		    fi
+
+		    if ! data=$(< "$file"); then
+			    return 1
+		    fi
+
+		    if [[ "$data" != "$i" ]]; then
+			    return 1
+		    fi
+	    done
+
+	    return 0
+    }
+
+    _test_queue_get_file_order() {
+	    local tmpdir
+	    local queue
+	    local err
+
+	    if ! tmpdir=$(mktemp -d); then
+		    return 1
+	    fi
+
+	    queue="$tmpdir/queue"
+	    err=0
+
+	    if ! queue_init "$queue"; then
+		    err=2
+
+	    elif ! _populate_queue "$queue" "$tmpdir" 10; then
+		    err=3
+
+	    elif ! _depopulate_queue "$queue" "$tmpdir" 10; then
+		    err=4
+	    fi
+
+	    rm -rf "$tmpdir"
+	    return "$err"
+    }
+
+    When call _test_queue_get_file_order
+    The status should equal 0
+  End
+
+  It "blocks for the specified amount of seconds if timeout > 0"
+    _test_queue_get_file_timeout_n() {
+	    local timeout
+	    local tmpdir
+	    local queue
+	    local err
+
+	    if ! tmpdir=$(mktemp -d); then
+		    return 1
+	    fi
+
+	    queue="$tmpdir/queue"
+	    timeout=5
+	    err=0
+
+	    if ! queue_init "$queue"; then
+		    err=2
+	    else
+		    local time_before
+		    local time_after
+		    local time_waited
+
+		    time_before=$(date +"%s")
+		    queue_get_file "$queue" "$tmpdir" "$timeout" &> /dev/null
+		    time_after=$(date +"%s")
+
+		    time_waited=$((time_after - time_before))
+		    if (( time_waited > (timeout + 1) )); then
+			    err=3
+		    elif (( time_waited < timeout )); then
+			    err=4
+		    fi
+	    fi
+
+	    rm -rf "$tmpdir"
+	    return "$err"
+    }
+
+    When call _test_queue_get_file_timeout_n
+    The status should equal 0
+  End
+
+  It "does not block if timeout == 0"
+    _test_queue_get_file_timeout_zero() {
+	    local tmpdir
+	    local queue
+	    local err
+
+	    if ! tmpdir=$(mktemp -d); then
+		    return 1
+	    fi
+
+	    queue="$tmpdir/queue"
+	    err=0
+
+	    if ! queue_init "$queue"; then
+		    err=2
+
+	    else
+		    local time_before
+		    local time_after
+
+		    time_before=$(date +"%s")
+		    queue_get_file "$queue" "$tmpdir" 0 &> /dev/null
+		    time_after=$(date +"%s")
+
+		    if (( (time_after - time_before) > 0 )); then
+			    err=3
+		    fi
+	    fi
+
+	    rm -rf "$tmpdir"
+	    return "$err"
+    }
+
+    When call _test_queue_get_file_timeout_zero
+    The status should equal 0
+  End
+
+  It "blocks until a message arrives if timeout == -1"
+    _test_queue_get_file_timeout_negative() {
+	    local tmpdir
+	    local queue
+	    local err
+
+	    if ! tmpdir=$(mktemp -d); then
+		    return 1
+	    fi
+
+	    queue="$tmpdir/queue"
+	    err=0
+
+	    if ! queue_init "$queue"; then
+		    err=2
+
+	    else
+		    local delay
+
+		    for (( delay = 0; delay < 5; delay++ )); do
+			    local time_before
+			    local time_after
+			    local time_waited
+
+			    if ! echo "hello world" > "$tmpdir/file"; then
+				    err=3
+				    break
+			    fi
+
+			    ( sleep "$delay"; queue_put_file "$queue" "$tmpdir/file" ) &
+
+			    time_before=$(date +"%s")
+			    queue_get_file "$queue" "$tmpdir" -1 &> /dev/null
+			    time_after=$(date +"%s")
+
+			    time_waited=$((time_after - time_before))
+
+			    if (( time_waited < delay )); then
+				    err=4
+				    break
+			    fi
+
+			    if (( (time_waited - delay) > 3 )); then
+				    err=5
+				    break
+			    fi
+		    done
+	    fi
+
+	    rm -rf "$tmpdir"
+	    return "$err"
+    }
+
+    When call _test_queue_get_file_timeout_negative
+    The status should equal 0
+  End
+
+  It "blocks until a message arrives if timeout is omitted"
+    _test_queue_get_file_timeout_omitted() {
+	    local tmpdir
+	    local queue
+	    local err
+
+	    if ! tmpdir=$(mktemp -d); then
+		    return 1
+	    fi
+
+	    queue="$tmpdir/queue"
+	    err=0
+
+	    if ! queue_init "$queue"; then
+		    err=2
+
+	    else
+		    local delay
+
+		    for (( delay = 0; delay < 5; delay++ )); do
+			    local time_before
+			    local time_after
+			    local time_waited
+
+			    if ! echo "hello world" > "$tmpdir/file"; then
+				    err=3
+				    break
+			    fi
+
+			    ( sleep "$delay"; queue_put_file "$queue" "$tmpdir/file" ) &
+
+			    time_before=$(date +"%s")
+			    queue_get_file "$queue" "$tmpdir" &> /dev/null
+			    time_after=$(date +"%s")
+
+			    time_waited=$((time_after - time_before))
+
+			    if (( time_waited < delay )); then
+				    err=3
+				    break
+			    fi
+
+			    if (( (time_waited - delay) > 3 )); then
+				    err=4
+				    break
+			    fi
+		    done
+	    fi
+
+	    rm -rf "$tmpdir"
+	    return "$err"
+    }
+
+    When call _test_queue_get_file_timeout_omitted
+    The status should equal 0
+  End
+End
 
 Describe "queue_foreach()"
   It "does not print anything on an empty queue"
