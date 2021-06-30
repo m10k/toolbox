@@ -430,6 +430,10 @@ queue_get_file() {
 	local dest
 	local err
 
+	if (( $# < 3 )); then
+		timeout=-1
+	fi
+
 	if ! [ -d "$destdir" ]; then
 		log_error "Destination must be a directory"
 		return 1
