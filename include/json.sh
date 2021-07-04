@@ -80,6 +80,20 @@ json_object() {
         return 0
 }
 
+json_object_get() {
+	local object="$1"
+	local field="$2"
+
+	local value
+
+	if ! value=$(jq -e -r ".$field" <<< "$object"); then
+		return 1
+	fi
+
+	echo "$value"
+	return 0
+}
+
 json_array() {
 	local args=("$@")
 
