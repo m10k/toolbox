@@ -86,7 +86,9 @@ json_object_get() {
 
 	local value
 
-	if ! value=$(jq -e -r ".$field" <<< "$object"); then
+	value=$(jq -e -r ".$field" <<< "$object")
+
+	if (( $? > 1 )); then
 		return 1
 	fi
 
@@ -143,7 +145,9 @@ json_array_head() {
 
 	local head
 
-	if ! head=$(jq -e -r '.[0]' <<< "$array"); then
+	head=$(jq -e -r '.[0]' <<< "$array")
+
+	if (( $? > 1 )); then
 		return 1
 	fi
 
