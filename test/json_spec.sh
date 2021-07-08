@@ -37,43 +37,85 @@ Describe "json_object()"
     The status should equal 1
   End
 
-  It "inserts a string into a JSON object"
+  It "inserts a string into a JSON object (type specified)"
+    When call json_object "data" "s:hello world"
+    The stdout should equal '{"data": "hello world"}'
+    The status should equal 0
+  End
+
+  It "inserts a string into a JSON object (type inferred)"
     When call json_object "data" "hello world"
     The stdout should equal '{"data": "hello world"}'
     The status should equal 0
   End
 
-  It "inserts an integer into a JSON object"
+  It "inserts an integer into a JSON object (type specified)"
+    When call json_object "data" "i:123"
+    The stdout should equal '{"data": 123}'
+    The status should equal 0
+  End
+
+  It "inserts an integer into a JSON object (type inferred)"
     When call json_object "data" 123
     The stdout should equal '{"data": 123}'
     The status should equal 0
   End
 
-  It "inserts a boolean (true) into a JSON object"
+  It "inserts a boolean (true) into a JSON object (type specified)"
+    When call json_object "data" "b:true"
+    The stdout should equal '{"data": true}'
+    The status should equal 0
+  End
+
+  It "inserts a boolean (true) into a JSON object (type inferred)"
     When call json_object "data" "true"
     The stdout should equal '{"data": true}'
     The status should equal 0
   End
 
-  It "inserts a boolean (false) into a JSON object"
+  It "inserts a boolean (false) into a JSON object (type specified)"
+    When call json_object "data" "b:false"
+    The stdout should equal '{"data": false}'
+    The status should equal 0
+  End
+
+  It "inserts a boolean (false) into a JSON object (type inferred)"
     When call json_object "data" "false"
     The stdout should equal '{"data": false}'
     The status should equal 0
   End
 
-  It "inserts a float into a JSON object"
+  It "inserts a float into a JSON object (type specified)"
     When call json_object "data" "3.14"
-    The stdout should equal '{"data": 3.14}'
+    The stdout should equal '{"data": 3.140000}'
     The status should equal 0
   End
 
-  It "inserts an object into a JSON object"
+  It "inserts a float into a JSON object (type inferred)"
+    When call json_object "data" "3.14"
+    The stdout should equal '{"data": 3.140000}'
+    The status should equal 0
+  End
+
+  It "inserts an object into a JSON object (type specified)"
+    When call json_object "data" "o:{}"
+    The stdout should equal '{"data": {}}'
+    The status should equal 0
+  End
+
+  It "inserts an object into a JSON object (type inferred)"
     When call json_object "data" "{}"
     The stdout should equal '{"data": {}}'
     The status should equal 0
   End
 
-  It "inserts an array into a JSON object"
+  It "inserts an array into a JSON object (type specified)"
+    When call json_object "data" "a:[]"
+    The stdout should equal '{"data": []}'
+    The status should equal 0
+  End
+
+  It "inserts an array into a JSON object (type inferred)"
     When call json_object "data" "[]"
     The stdout should equal '{"data": []}'
     The status should equal 0
@@ -131,37 +173,73 @@ Describe "json_array()"
     The status should equal 0
   End
 
-  It "creates a string array"
+  It "creates a string array (type specified)"
+    When call json_array "s:hello" "s:world"
+    The stdout should equal '["hello", "world"]'
+    The status should equal 0
+  End
+
+  It "creates a string array (type inferred)"
     When call json_array "hello" "world"
     The stdout should equal '["hello", "world"]'
     The status should equal 0
   End
 
-  It "creates an integer array"
+  It "creates an integer array (type specified)"
+    When call json_array "i:1" "i:2" "i:3"
+    The stdout should equal '[1, 2, 3]'
+    The status should equal 0
+  End
+
+  It "creates an integer array (type inferred)"
     When call json_array 1 2 3
     The stdout should equal '[1, 2, 3]'
     The status should equal 0
   End
 
-  It "creates a boolean array"
+  It "creates a boolean array (type specified)"
+    When call json_array "b:true" "b:false"
+    The stdout should equal '[true, false]'
+    The status should equal 0
+  End
+
+  It "creates a boolean array (type inferred)"
     When call json_array "true" "false"
     The stdout should equal '[true, false]'
     The status should equal 0
   End
 
-  It "creates a float array"
-    When call json_array "1.23" "2.34" "3.45"
-    The stdout should equal "[1.23, 2.34, 3.45]"
+  It "creates a float array (type specified)"
+    When call json_array "f:1.23" "f:2.34" "f:3.45"
+    The stdout should equal "[1.230000, 2.340000, 3.450000]"
     The status should equal 0
   End
 
-  It "creates an array arrays"
+  It "creates a float array (type inferred)"
+    When call json_array "1.23" "2.34" "3.45"
+    The stdout should equal "[1.230000, 2.340000, 3.450000]"
+    The status should equal 0
+  End
+
+  It "creates an array array (type specified)"
+    When call json_array "a:[]" "a:[]"
+    The stdout should equal "[[], []]"
+    The status should equal 0
+  End
+
+  It "creates an array array (type inferred)"
     When call json_array "[]" "[]"
     The stdout should equal "[[], []]"
     The status should equal 0
   End
 
-  It "creates an object array"
+  It "creates an object array (type specified)"
+    When call json_array "o:{}" "o:{}"
+    The stdout should equal "[{}, {}]"
+    The status should equal 0
+  End
+
+  It "creates an object array (type inferred)"
     When call json_array "{}" "{}"
     The stdout should equal "[{}, {}]"
     The status should equal 0
@@ -231,37 +309,37 @@ Describe "json_array_tail()"
   End
 
   It "removes an integer from the head of the array"
-    When call json_array_head "[1, 2, 3]"
+    When call json_array_tail "[1, 2, 3]"
     The stdout should equal "[2, 3]"
     The status should equal 0
   End
 
   It "removes a boolean (true) from the head of the array"
-    When call json_array_head "[true, false, false]"
+    When call json_array_tail "[true, false, false]"
     The stdout should equal "[false, false]"
     The status should equal 0
   End
 
   It "removes a boolean (false) from the head of the array"
-    When call json_array_head "[false, true, true]"
+    When call json_array_tail "[false, true, true]"
     The stdout should equal "[true, true]"
     The status should equal 0
   End
 
   It "removes a float from the head of the array"
-    When call json_array_head "[1.23, 2.34, 3.45]"
-    The stdout should equal "[2.34, 3.45]"
+    When call json_array_tail "[1.23, 2.34, 3.45]"
+    The stdout should equal "[2.340000, 3.450000]"
     The status should equal 0
   End
 
   It "removes an array from the head of the array"
-    When call json_array_head "[[], [1]]"
+    When call json_array_tail "[[], [1]]"
     The stdout should equal "[[1]]"
     The status should equal 0
   End
 
   It "removes an object from the head of the array"
-    When call json_array_head '[{}, {"hello": "world"}]'
+    When call json_array_tail '[{}, {"hello": "world"}]'
     The stdout should equal '[{"hello": "world"}]'
     The status should equal 0
   End
