@@ -147,6 +147,12 @@ inst_running() {
 		return 0
 	fi
 
+	# The next invocation of inst_running() will return true if we don't
+	# increase the semaphore here, since sem_trywait() decreased it.
+	if ! sem_post "$__inst_sem"; then
+		log_warn "Could not post semaphore $__inst_sem"
+	fi
+
 	return 1
 }
 
