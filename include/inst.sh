@@ -53,13 +53,13 @@ _inst_handle_opt() {
 
 	case "$opt" in
 		"stop")
-			if ! inst_stop "$arg"; then
+			if ! inst_stop "$arg" "$__inst_name"; then
 				ret=1
 			fi
 			;;
 
 		"list")
-			if ! inst_list; then
+			if ! inst_list "$__inst_name"; then
 				ret=1
 			fi
 			;;
@@ -73,7 +73,15 @@ _inst_handle_opt() {
 }
 
 inst_list() {
+	local instname="$1"
+
+	local instpath
 	local sem
+
+	if [[ -z "$instname" ]]; then
+		instname="$__inst_name"
+	fi
+	instpath="$TOOLBOX_HOME/inst/$instname"
 
 	while read -r sem; do
 		local owner
@@ -91,8 +99,8 @@ inst_list() {
 			continue
 		fi
 
-		if ! status_text=$(inst_get_status_message "$owner") ||
-		   ! status_time=$(inst_get_status_timestamp "$owner"); then
+		if ! status_text=$(inst_get_status_message "$owner" "$instname") ||
+		   ! status_time=$(inst_get_status_timestamp "$owner" "$instname"); then
 			continue
 		fi
 
@@ -106,18 +114,25 @@ inst_list() {
 			state="RUNNING"
 		fi
 
-		echo "$owner $state [$timestamp:$status_text] $__inst_name $argv"
-	done < <(find "$__inst_path" -regex ".*/[0-9]+")
+		echo "$owner $state [$timestamp:$status_text] $instname $argv"
+	done < <(find "$instpath" -regex ".*/[0-9]+")
 
 	return 0
 }
 
 inst_stop() {
 	local pid="$1"
+	local instname="$2"
 
 	local sem
+	local instpath
 
-	sem="$__inst_path/$pid"
+	if [[ -z "$instname" ]]; then
+		instname="$__inst_name"
+	fi
+	instpath="$TOOLBOX_HOME/inst/$instname"
+
+	sem="$instpath/$pid"
 
 	if ! sem_post "$sem" &> /dev/null; then
 		log_error "No such instance"
@@ -198,11 +213,18 @@ inst_set_status() {
 
 inst_get_status() {
 	local pid="$1"
+	local instname="$2"
 
 	local status
+	local instpath
 
-	if ! status=$(< "$__inst_path/$pid.status"); then
-		log_error "Could not read from $__inst_path/$pid.status"
+	if [[ -z "$instname" ]]; then
+		instname="$__inst_name"
+	fi
+	instpath="$TOOLBOX_HOME/inst/$instname"
+
+	if ! status=$(< "$instpath/$pid.status"); then
+		log_error "Could not read from $instpath/$pid.status"
 		return 1
 	fi
 
@@ -212,8 +234,9 @@ inst_get_status() {
 
 inst_get_status_message() {
 	local pid="$1"
+	local instname="$2"
 
-	if ! status=$(inst_get_status "$pid"); then
+	if ! status=$(inst_get_status "$pid" "$instname"); then
 		return 1
 	fi
 
@@ -223,10 +246,11 @@ inst_get_status_message() {
 
 inst_get_status_timestamp() {
 	local pid="$1"
+	local instname="$2"
 
 	local status
 
-	if ! status=$(inst_get_status "$pid"); then
+	if ! status=$(inst_get_status "$pid" "$instname"); then
 		return 1
 	fi
 
@@ -235,9 +259,17 @@ inst_get_status_timestamp() {
 }
 
 inst_count() {
-        local -i num
+	local instname="$1"
 
-        if ! num=$(find "$__inst_path" -regex ".*/[0-9]+" | wc -l); then
+        local -i num
+	local instpath
+
+	if [[ -z "$instname" ]]; then
+		instname="$__inst_name"
+	fi
+	instpath="$TOOLBOX_HOME/inst/$instname"
+
+        if ! num=$(find "$instpath" -regex ".*/[0-9]+" | wc -l); then
                 return 1
         fi
 
@@ -248,7 +280,7 @@ inst_count() {
 inst_singleton() {
         local args=("$@")
 
-        if (( $(inst_count) > 0 )); then
+        if (( $(inst_count "$__inst_name") > 0 )); then
                 log_error "Another instance is already running"
                 return 1
         fi
