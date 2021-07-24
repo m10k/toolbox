@@ -156,6 +156,14 @@ inst_running() {
 	return 1
 }
 
+_inst_stop_self() {
+	if ! inst_stop "$BASHPID"; then
+		return 1
+	fi
+
+	return 0
+}
+
 _inst_run() {
 	local cmd="$1"
 	local args=("${@:2}")
@@ -178,6 +186,8 @@ _inst_run() {
 		log_error "Could not initialize semaphore $__inst_sem"
 		return 1
 	fi
+
+	trap _inst_stop_self INT HUP TERM EXIT QUIT
 
 	if ! "$cmd" "${args[@]}"; then
 		ret=1
