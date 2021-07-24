@@ -696,3 +696,30 @@ ipc_endpoint_publish() {
 
 	return 0
 }
+
+_ipc_endpoint_foreach_message_helper() {
+	local msg="$1"
+	local endpoint="$2"
+	local func="$3"
+	local args=("${@:4}")
+
+	"$func" "$endpoint" "$msg" "${args[@]}"
+	return "$?"
+}
+
+ipc_endpoint_foreach_message() {
+	local endpoint="$1"
+	local func="$2"
+	local args=("${@:3}")
+
+	local queue
+
+	queue="$__ipc_root/$endpoint/queue"
+
+	if ! queue_foreach "$queue" _ipc_endpoint_foreach_message_helper \
+	                   "$endpoint" "$func" "${args[@]}"; then
+		return 1
+	fi
+
+	return 0
+}
