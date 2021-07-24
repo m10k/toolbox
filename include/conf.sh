@@ -31,8 +31,8 @@ __init() {
                 return 1
         fi
 
-	declare -xgr __conf_root="$TOOLBOX_HOME/conf"
-	declare -xgr __conf_file="$__conf_root/$script_name.conf"
+	declare -xgr __conf_root="$TOOLBOX_HOME/conf/$script_name"
+	declare -xgr __conf_default="$__conf_root/default.conf"
 
 	if ! mkdir -p "$__conf_root"; then
 		log_error "Could not create config dir"
@@ -44,14 +44,14 @@ __init() {
 
 conf_get() {
 	local name="$1"
-	local default="$2"
+	local config="$2"
 
-	if ! grep -m 1 -oP "^$name=\K.*" "$__conf_file" 2>/dev/null; then
-		if (( $# <= 1 )); then
-			return 1
-		fi
+	if [[ -z "$config" ]]; then
+		config="default"
+	fi
 
-		echo "$default"
+	if ! grep -m 1 -oP "^$name=\\K.*" "$__conf_root/$config.conf" 2>/dev/null; then
+		return 1
 	fi
 
 	return 0
@@ -59,8 +59,13 @@ conf_get() {
 
 conf_unset() {
 	local name="$1"
+	local config="$2"
 
-	if ! sed -i -e "/^$name=.*/d" "$__conf_file" &> /dev/null; then
+	if [[ -z "$config" ]]; then
+		config="default"
+	fi
+
+	if ! sed -i -e "/^$name=.*/d" "$__conf_root/$config.conf" &> /dev/null; then
 		return 1
 	fi
 
@@ -71,16 +76,32 @@ conf_unset() {
 conf_set() {
 	local name="$1"
 	local value="$2"
+	local config="$3"
 
-	if conf_get "$name" &> /dev/null; then
-		if ! conf_unset "$name"; then
+	if [[ -z "$config" ]]; then
+		config="default"
+	fi
+
+	if conf_get "$name" "$config" &> /dev/null; then
+		if ! conf_unset "$name" "$config"; then
 			return 1
 		fi
 	fi
 
-	if ! echo "$name=$value" >> "$__conf_file"; then
+	if ! echo "$name=$value" >> "$__conf_root/$config.conf"; then
 		return 1
 	fi
+
+	return 0
+}
+
+conf_get_domains() {
+	local config
+
+	while read -r config; do
+		config="${config##*/}"
+		echo "${config%.conf}"
+	done < <(find "$__conf_root" -type f -iname "*.conf")
 
 	return 0
 }
