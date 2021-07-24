@@ -105,3 +105,21 @@ conf_get_domains() {
 
 	return 0
 }
+
+conf_get_names() {
+	local config="$1"
+
+	local confpath
+
+	if [[ -z "$config" ]]; then
+		config="default"
+	fi
+
+	confpath="$__conf_root/$config.conf"
+
+	if ! grep -oP "^\\K[^=]+" < "$confpath"; then
+		return 1
+	fi
+
+	return 0
+}
