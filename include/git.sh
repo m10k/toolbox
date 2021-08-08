@@ -42,7 +42,7 @@ git_clone() {
 git_current_branch() {
 	local repository="$1"
 
-	if ! grep -oP "refs/heads/\K.*" < "$repository/.git/HEAD"; then
+	if ! grep -oP "refs/heads/\\K.*" < "$repository/.git/HEAD"; then
 		log_error "Could not get current branch of $repository"
 		return 1
 	fi
