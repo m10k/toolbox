@@ -8,8 +8,8 @@ all:
 
 clean:
 
-test:
-	./test.sh
+# test:
+# 	./test.sh
 
 install:
 	mkdir -p $(DESTDIR)/$(PREFIX)/share/toolbox
