@@ -1,15 +1,15 @@
 Source: toolbox
 Priority: optional
 Maintainer: Matthias Kruk <m@m10k.eu>
-Build-Depends: debhelper (>= 9)
+Build-Depends: debhelper (>= 9), make, coreutils, findutils, grep, sed
 Standards-Version: 3.9.8
 Section: shells
-Homepage: https://m10k.eu/toolbox
+Homepage: https://m10k.eu/toolbox.html
 
 Package: toolbox
 Section: shells
 Architecture: all
-Depends: bash (>= 4.0) ${misc:Depends}
+Depends: bash (>= 4.0), coreutils, findutils, grep, sed, git, jq, ${misc:Depends}
 Description: Module management for bash scripts
  Provides the necessary infrastructure to use loadable modules
  in shell scripts, and a set of basic modules for common tasks.

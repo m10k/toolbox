@@ -1,3 +1,37 @@
+toolbox (0.3.1-1) unstable; urgency=medium
+
+  * New modules
+    - git: easy interaction with git repositories
+    - ipc: primitives for message-based IPC
+    - wmutex: weak (owner-less) mutexes
+  * Removed modules
+    - acpi/ac: Moved to toolbox-linux
+    - acpi/battery: Moved to toolbox-linux
+    - clip: Moved to toolbox-x11
+    - gitlab: Moved to toolbox-restapis
+    - iruca: Moved to toolbox-restapis
+    - net/iface: Moved to toolbox-linux
+    - ssh: Moved to toolbox-goodies
+    - xrandr: Moved to toolbox-x11
+  * Fixes
+    - mutex: Don't use inotify because it doesn't work on NFS
+  * Improvements
+    - array: Add functions for comparing arrays
+    - conf: Add configuration domains
+    - inst: Make daemons handle signals
+    - inst: Add status messages
+    - json: Implement type hints
+    - mutex: Implement timeouts
+    - opt: Implement RegEx commandline validation
+    - queue: Add queue_foreach() function
+    - queue: Implement timeouts
+    - sem: Fix performance issues
+    - sem: Implement timeouts
+    - Add shellspec-based test suite
+
+ -- Matthias Kruk <m@m10k.eu>  Thu, 25 Nov 2021 13:42:15 +0900
+
+
 toolbox (0.3-1) unstable; urgency=medium
 
   * New modules
