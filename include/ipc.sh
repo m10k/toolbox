@@ -654,7 +654,7 @@ _ipc_endpoint_topic_subscribe() {
 		return 1
 	fi
 
-	if ! ln -sf "$topicdir" "$__ipc_root/$endpoint/subscriptions/$topic"; then
+	if ! ln -sfn "$topicdir" "$__ipc_root/$endpoint/subscriptions/$topic"; then
 		rm -f "$topicdir/$__ipc_self"
 		return 1
 	fi
