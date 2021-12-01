@@ -25,7 +25,6 @@ __init() {
 	declare -gxr  __ipc_public="$__ipc_root/pub"
 	declare -gxr  __ipc_private="$__ipc_root/priv/$USER"
 	declare -gxr  __ipc_group="toolbox_ipc"
-	declare -gxr  __ipc_self="$HOSTNAME.$$"
 	declare -gxr  __ipc_pubsub_root="$__ipc_root/pubsub"
 
 	declare -gxir __ipc_version=1
@@ -515,7 +514,7 @@ ipc_endpoint_close() {
 	fi
 
 	while read -r subscription; do
-		if ! rm "$subscription/$__ipc_self"; then
+		if ! rm "$subscription/${name//\//_}"; then
 			log_error "Could unsubscribe $name from $subscription"
 		fi
 	done < <(find "$endpoint/subscriptions")
@@ -647,15 +646,17 @@ _ipc_endpoint_topic_subscribe() {
 	local topic="$2"
 
 	local topicdir
+	local subscription
 
 	topicdir="$__ipc_pubsub_root/$topic"
+	subscription="$topicdir/${endpoint//\//_}"
 
-	if ! ln -sf "$endpoint" "$topicdir/$__ipc_self"; then
+	if ! ln -sf "$endpoint" "$subscription"; then
 		return 1
 	fi
 
 	if ! ln -sfn "$topicdir" "$__ipc_root/$endpoint/subscriptions/$topic"; then
-		rm -f "$topicdir/$__ipc_self"
+		rm -f "$subscription"
 		return 1
 	fi
 
