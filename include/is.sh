@@ -20,6 +20,16 @@ __init() {
 	return 0
 }
 
+is_int() {
+	local str="$1"
+
+	if [[ "$str" =~ ^[+-]{,1}[0-9]+$ ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
 is_digits() {
 	local str="$1"
 
