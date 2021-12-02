@@ -1,3 +1,12 @@
+toolbox (0.3.2-1) unstable; urgency=medium
+
+  * Fixes
+    - ipc: Fix bug that occurs when creating topics that already exist
+    - ipc: Prevent endpoints from being subscribed to a topic more than once
+
+ -- Matthias Kruk <m@m10k.eu>  Wed, 01 Dec 2021 20:49:05 +0900
+
+
 toolbox (0.3.1-1) unstable; urgency=medium
 
   * New modules
