@@ -165,3 +165,18 @@ git_commit() {
 
 	return 0
 }
+
+git_remote_get() {
+	local repository="$1"
+	local remote="$2"
+
+	local url
+
+	if ! url=$(cd "$repository" && git remote get-url "$remote"); then
+		log_error "Could not get URL of remote $remote in $repository"
+		return 1
+	fi
+
+	echo "$url"
+	return 0
+}
