@@ -39,6 +39,21 @@ git_clone() {
 	return 0
 }
 
+git_branch_new() {
+	local repository="$1"
+	local branch="$2"
+
+	local output
+
+	if ! output=$(cd "$repository" && git branch "$branch" 2>&1); then
+		log_error "Could not create branch $branch in $repository"
+		log_highlight "git branch" <<< "$output" | log_error
+		return 1
+	fi
+
+	return 0
+}
+
 git_branch_get_current() {
 	local repository="$1"
 
@@ -130,6 +145,21 @@ git_push() {
 	if ! output=$(cd "$repository" && git push "$remote" "$branch" 2>&1); then
 		log_error "Could not push to $branch of $repository to $remote"
 		log_highlight "git push" <<< "$output" | log_error
+		return 1
+	fi
+
+	return 0
+}
+
+git_commit() {
+	local repository="$1"
+	local message="$2"
+
+	local output
+
+	if ! output=$(cd "$repository" && git commit -F - <<< "$message" 2>&1); then
+		log_error "Could not commit to $repository"
+		log_highlight "git commit" <<< "$output" | log_error
 		return 1
 	fi
 
