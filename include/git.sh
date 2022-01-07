@@ -39,7 +39,7 @@ git_clone() {
 	return 0
 }
 
-git_current_branch() {
+git_branch_get_current() {
 	local repository="$1"
 
 	if ! grep -oP "refs/heads/\\K.*" < "$repository/.git/HEAD"; then
@@ -50,7 +50,7 @@ git_current_branch() {
 	return 0
 }
 
-git_checkout() {
+git_branch_checkout() {
 	local repository="$1"
 	local branch="$2"
 
@@ -80,7 +80,7 @@ git_merge() {
 
 	err=0
 
-	if ! original_branch=$(git_current_branch "$repository"); then
+	if ! original_branch=$(git_branch_get_current "$repository"); then
 		return 1
 	fi
 
@@ -89,7 +89,7 @@ git_merge() {
 	fi
 
 	if [[ "$original_branch" != "$destination" ]]; then
-		if ! git_checkout "$repository" "$destination"; then
+		if ! git_branch_checkout "$repository" "$destination"; then
 			return 1
 		fi
 	fi
@@ -101,7 +101,7 @@ git_merge() {
 	fi
 
 	if [[ "$original_branch" != "$destination" ]]; then
-		if ! git_checkout "$repository" "$original_branch"; then
+		if ! git_branch_checkout "$repository" "$original_branch"; then
 			log_error "Could not check out previous branch $original_branch"
 			return 1
 		fi
@@ -122,7 +122,7 @@ git_push() {
 	fi
 
 	if (( $# < 2 )); then
-		if ! branch=$(git_current_branch "$repository"); then
+		if ! branch=$(git_branch_get_current "$repository"); then
 			return 1
 		fi
 	fi
