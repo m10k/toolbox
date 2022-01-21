@@ -1,0 +1,24 @@
+#!/bin/sh
+
+main() {
+	# If a group exists, there is a chance that the user
+	# has customized directory ownership and permissions,
+	# so we don't change it.
+
+	if addgroup toolbox; then
+		chown root.toolbox /var/lib/toolbox
+		chmod 770 /var/lib/toolbox
+	fi
+
+	if addgroup toolbox_ipc; then
+		chown root.toolbox_ipc /var/lib/toolbox/ipc
+		chmod 770 /var/lib/toolbox/ipc
+	fi
+
+	return 0
+}
+
+{
+	main "$@"
+	exit "$?"
+}

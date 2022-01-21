@@ -14,6 +14,7 @@ clean:
 install:
 	mkdir -p $(DESTDIR)/$(PREFIX)/share/toolbox
 	mkdir -p $(DESTDIR)/$(PREFIX)/bin
+	mkdir -p $(DESTDIR)/var/lib/toolbox/ipc
 	cp toolbox.sh $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	cp -r include $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	chown -R root.root $(DESTDIR)/$(PREFIX)/share/toolbox

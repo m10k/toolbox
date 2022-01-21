@@ -1,7 +1,7 @@
 Source: toolbox
 Priority: optional
 Maintainer: Matthias Kruk <m@m10k.eu>
-Build-Depends: debhelper (>= 9), make, coreutils, findutils, grep, sed
+Build-Depends: debhelper (>= 9), adduser (>= 3.11), make, coreutils, findutils, grep, sed
 Standards-Version: 3.9.8
 Section: shells
 Homepage: https://m10k.eu/toolbox.html

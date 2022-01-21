@@ -1,0 +1,13 @@
+#!/bin/sh
+
+main() {
+	delgroup toolbox
+	delgroup toolbox_ipc
+
+	return 0
+}
+
+{
+	main "$@"
+	exit "$?"
+}
