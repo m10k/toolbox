@@ -1,6 +1,14 @@
 #!/bin/sh
 
 main() {
+	if dpkg-statoverride --list /var/lib/toolbox/ipc >/dev/null 2>&1; then
+		dpkg-statoverride --remove /var/lib/toolbox/ipc
+	fi
+
+	if dpkg-statoverride --list /var/lib/toolbox >/dev/null 2>&1; then
+		dpkg-statoverride --remove /var/lib/toolbox
+	fi
+
 	delgroup toolbox
 	delgroup toolbox_ipc
 

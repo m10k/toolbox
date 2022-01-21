@@ -6,13 +6,15 @@ main() {
 	# so we don't change it.
 
 	if addgroup toolbox; then
-		chown root.toolbox /var/lib/toolbox
-		chmod 770 /var/lib/toolbox
+		if ! dpkg-statoverride --list /var/lib/toolbox >/dev/null 2>&1; then
+			dpkg-statoverride --update --add root toolbox 0770 /var/lib/toolbox
+		fi
 	fi
 
 	if addgroup toolbox_ipc; then
-		chown root.toolbox_ipc /var/lib/toolbox/ipc
-		chmod 770 /var/lib/toolbox/ipc
+		if ! dpkg-statoverride --list /var/lib/toolbox/ipc >/dev/null 2>&1; then
+			dpkg-statoverride --update --add root toolbox_ipc 0770 /var/lib/toolbox/ipc
+		fi
 	fi
 
 	return 0
