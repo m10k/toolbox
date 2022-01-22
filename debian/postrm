@@ -1,6 +1,13 @@
 #!/bin/sh
 
 main() {
+	action="$1"
+
+	# don't remove stat overrides if not uninstalling
+	if [ "$action" != "remove" ]; then
+		return 0
+	fi
+
 	if dpkg-statoverride --list /var/lib/toolbox/ipc >/dev/null 2>&1; then
 		dpkg-statoverride --remove /var/lib/toolbox/ipc
 	fi

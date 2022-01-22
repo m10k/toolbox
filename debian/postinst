@@ -1,6 +1,13 @@
 #!/bin/sh
 
 main() {
+	action="$1"
+
+	# only add groups and stat overrides when installing
+	if [ "$action" != "configure" ]; then
+		return 0
+	fi
+
 	# If a group exists, there is a chance that the user
 	# has customized directory ownership and permissions,
 	# so we don't change it.
