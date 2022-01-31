@@ -15,6 +15,33 @@ source *toolbox.sh*, you can use `include()` to load the modules
 that ship with toolbox, or create your own ones.
 
 
+## How do I use it?
+
+All you have to do is source *toolbox.sh* and you can start using
+the `include()` function. For example, the following code is a
+minimal publisher using the *ipc* module.
+
+    . toolbox.sh
+    include "ipc"
+    
+    endp=$(ipc_endpoint_open)
+    ipc_endpoint_publish "$endp" "mytopic" "Hello world"
+
+And this is the corresponding subscriber.
+
+    . toolbox.sh
+    include "ipc"
+    
+    endp=$(ipc_endpoint_open)
+    ipc_endpoint_subscribe "$endp" "mytopic"
+    
+    if msg=$(ipc_endpoint_recv "$endp"); then
+    	data=$(ipc_msg_get_data "$msg")
+    
+    	echo "Received message: $data"
+    fi
+
+
 ## What modules are there?
 
 Toolbox comes with a number of modules that solve common problems.
