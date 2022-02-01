@@ -9,7 +9,7 @@ Homepage: https://m10k.eu/toolbox.html
 Package: toolbox
 Section: shells
 Architecture: all
-Depends: bash (>= 4.0), coreutils, findutils, grep, sed, git, jq, ${misc:Depends}
+Depends: bash (>= 4.0), coreutils, findutils, grep, sed, git, jq, gnupg2, ${misc:Depends}
 Description: Module management for bash scripts
  Provides the necessary infrastructure to use loadable modules
  in shell scripts, and a set of basic modules for common tasks.
