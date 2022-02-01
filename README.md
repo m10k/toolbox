@@ -123,6 +123,11 @@ You can add a user to these groups with the following command.
 
     # usermod -a -G toolbox,toolbox_ipc USERNAME
 
+The ipc module uses GPG to sign and verify messages, so you also need to make
+sure that you have a keypair. You can generate one with the following command.
+
+    $ gpg --full-generate-key
+
 
 ## How does this work?
 
