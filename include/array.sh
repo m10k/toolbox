@@ -37,11 +37,11 @@ array_contains() {
 
 array_to_lines() {
 	local array=("$@")
-	local item
 
-	for item in "${array[@]}"; do
-		echo "$item"
-	done
+	# Don't print an empty line if array is empty
+	if (( ${#array[@]} > 0 )); then
+		printf "%s\n" "${array[@]}"
+	fi
 }
 
 array_sort() {
