@@ -23,7 +23,7 @@ __init() {
 mutex_trylock() {
 	local lock="$1"
 
-	if ! ln -s "$BASHPID" "$lock" &> /dev/null; then
+	if ! ln -s "$$" "$lock" &> /dev/null; then
 		return 1
 	fi
 
@@ -58,7 +58,7 @@ mutex_unlock() {
 		return 1
 	fi
 
-	if (( owner != BASHPID )); then
+	if (( owner != $$ )); then
 		return 2
 	fi
 
