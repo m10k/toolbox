@@ -515,9 +515,9 @@ ipc_endpoint_close() {
 
 	while read -r subscription; do
 		if ! rm "$subscription/${name//\//_}"; then
-			log_error "Could unsubscribe $name from $subscription"
+			log_error "Could not unsubscribe $name from $subscription"
 		fi
-	done < <(find "$endpoint/subscriptions")
+	done < <(find "$endpoint/subscriptions" -mindepth 1 -maxdepth 1 -type l)
 
 	if ! rm -rf "$endpoint"; then
 		return 1
