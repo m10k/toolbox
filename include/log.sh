@@ -106,7 +106,7 @@ _log_write() {
 			echo "$timestamp $$ $prefix $line" 1>&2
 		done
 	else
-		while read -r line; do
+		while IFS="" read -r line; do
 			_log_write "$level" "$prefix" "$line"
 		done
 	fi
