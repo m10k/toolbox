@@ -280,15 +280,13 @@ _ipc_msg_new() {
 	local destination="$2"
 	local data="$3"
 
-	local signature
-	local encoded
-	local data
-	local timestamp
-	local envelope
-	local message
 	local encoded_data
-	local encoded_envelope
+	local timestamp
+	local message
 	local encoded_message
+	local signature
+	local envelope
+	local encoded_envelope
 
 	if ! encoded_data=$(_ipc_encode <<< "$data"); then
 		log_error "Could not encode data"
