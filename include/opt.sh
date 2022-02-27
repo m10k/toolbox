@@ -239,6 +239,9 @@ opt_get() {
 }
 
 opt_get_argv() {
-	echo "${__opt_argv[@]}"
+	if ! array_to_lines "${__opt_argv[@]}"; then
+		return 1
+	fi
+
 	return 0
 }
