@@ -87,7 +87,7 @@ inst_list() {
 		local owner
 		local semval
 		local state
-		local argv
+	        local argv
 		local status_text
 		local status_time
 		local timestamp
@@ -95,7 +95,7 @@ inst_list() {
 		owner="${sem##*/}"
 		semval=$(sem_peek "$sem")
 
-		if ! argv=$(<"$sem.argv") 2> /dev/null; then
+		if ! readarray -t argv < "$sem.argv" 2> /dev/null; then
 			continue
 		fi
 
@@ -114,7 +114,7 @@ inst_list() {
 			state="RUNNING"
 		fi
 
-		echo "$owner $state [$timestamp:$status_text] $instname $argv"
+		echo "$owner $state [$timestamp:$status_text] $instname ${argv[*]}"
 	done < <(find "$instpath" -regex ".*/[0-9]+")
 
 	return 0
