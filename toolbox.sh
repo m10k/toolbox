@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # toolbox.sh - Framework for modular bash scripts
-# Copyright (C) 2021 Matthias Kruk
+# Copyright (C) 2021-2022 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ __toolbox_init() {
 	readonly -f have
 	readonly -f _try_include
 	readonly -f include
+	readonly -f command_not_found_handle
 
 	return 0
 }
@@ -106,6 +107,40 @@ include() {
 	done
 
 	return 0
+}
+
+command_not_found_handle() {
+	local command="$1"
+	# local args=("${@:2}") # not used
+
+	local searchpath
+	declare -A candidates
+
+	# Display the same message that bash usually would
+	echo "bash: $command: command not found" 1>&2
+
+	for searchpath in "${__TOOLBOX_MODULEPATH[@]}"; do
+		local module
+
+		while read -r module; do
+			local module_name
+			local prefix
+
+			module_name="${module#"$searchpath"/}"
+			module_name="${module_name%.sh}"
+			prefix="${module_name//\//_}"
+
+			if [[ "$command" == "$prefix"* ]]; then
+				candidates["$module_name"]="$module"
+			fi
+		done < <(find -L "$searchpath" -type f -iname "*.sh")
+	done
+
+	if (( ${#candidates[@]} > 0 )); then
+		echo "Did you forget to include a module? Possible candidates are: ${!candidates[*]}" 1>&2
+	fi
+
+	return 127
 }
 
 {
