@@ -38,6 +38,7 @@ __init() {
 	declare -Axg __opt_regex
 	declare -Axg __opt_action
 	declare -Axg __opt_map
+	declare -Axg __opt_required
 
 	opt_add_arg "h" "help" "" 0 \
 		    "Print this text" \
@@ -125,6 +126,10 @@ opt_add_arg() {
 		__opt_default["$long"]="$default"
 	fi
 
+	if (( parsed_flags & __opt_flag_required )); then
+		__opt_required["$long"]="$long"
+	fi
+
 	return 0
 }
 
@@ -156,10 +161,23 @@ opt_print_help() {
 	return 2
 }
 
+_opt_have_required() {
+	local option
+	local -i err
+
+	err=0
+
+	for option in "${!__opt_required[@]}"; do
+		log_error "Missing required option: --$option"
+		err=1
+	done
+
+	return "$err"
+}
+
 opt_parse() {
 	local argv=("$@")
 
-	local optname
 	local err
 	local i
 
@@ -186,6 +204,10 @@ opt_parse() {
 		flags="${__opt_flags[$long]}"
 		action="${__opt_action[$long]}"
 		regex="${__opt_regex[$long]}"
+
+		if [[ -n "${__opt_required[$long]}" ]]; then
+			unset __opt_required["$long"]
+		fi
 
 		if (( flags & __opt_flag_has_value )); then
 			((i++))
@@ -220,20 +242,9 @@ opt_parse() {
 		fi
 	done
 
-	for optname in "${__opt_long[@]}"; do
-		local flags
-
-		flags="${__opt_flags[$optname]}"
-
-		if ! (( flags & __opt_flag_required )); then
-			continue
-		fi
-
-		if ! array_contains "$optname" "${!__opt_value[@]}"; then
-			log_error "Missing required argument: $optname"
-			err=1
-		fi
-	done
+	if ! _opt_have_required; then
+		return 1
+	fi
 
 	return "$err"
 }
