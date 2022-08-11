@@ -34,7 +34,6 @@ __init() {
 	declare -Axg __opt_action
 	declare -Axg __opt_map
 	declare -xgi __opt_num=0
-	declare -xgi __opt_longest=0
 
 	opt_add_arg "h" "help" "" 0 \
 		    "Print this text" \
@@ -62,7 +61,6 @@ opt_add_arg() {
 	local regex="$6"
 	local action="$7"
 
-	local optlen
 	local num_flags
 	local bflags
 	local i
@@ -91,8 +89,6 @@ opt_add_arg() {
 		esac
 	done
 
-	optlen="${#long}"
-
 	__opt_short["$long"]="$short"
 	__opt_long["$short"]="$long"
 	__opt_flags["$long"]="$bflags"
@@ -102,10 +98,6 @@ opt_add_arg() {
 	__opt_default["$long"]="$default"
 	__opt_map["-$short"]="$long"
 	__opt_map["--$long"]="$long"
-
-	if (( __opt_longest < optlen )); then
-		__opt_longest="$optlen"
-	fi
 
 	((__opt_num++))
 
@@ -129,17 +121,13 @@ opt_print_help() {
 	for short in $(array_sort "${__opt_short[@]}"); do
 		local long
 		local desc
-		local optlen
-		local padding
 
 		long="${__opt_long[$short]}"
 		desc="${__opt_desc[$long]}"
-		optlen="${#long}"
-		padding=$((__opt_longest - optlen))
 
-		printf " -%s  --%s %*s %s\n" \
-		       "$short" "$long" "$padding" "" "$desc"
-	done
+		printf "\t-%s\t--%s\t%s\n" \
+		       "$short" "$long" "$desc"
+	done | column -s $'\t' -t
 
 	return 2
 }
