@@ -99,8 +99,8 @@ opt_add_arg() {
 	local flags="$3"
 	local default="$4"
 	local desc="$5"
-	local regex="$6"
-	local action="$7"
+	local regex="${6-.*}"
+	local action="${7-true}"
 
 	local -i parsed_flags
 
@@ -212,7 +212,7 @@ opt_parse() {
 			value="${argv[$i]}"
 			regex="${__opt_regex[$long]}"
 
-			if [[ -n "$regex" ]] && ! [[ "$value" =~ $regex ]]; then
+			if ! [[ "$value" =~ $regex ]]; then
 				log_error "Value \"$value\" doesn't match \"$regex\""
 				return 1
 			fi
@@ -222,13 +222,11 @@ opt_parse() {
 
 		__opt_value["$long"]="$value"
 
-		if [[ -n "$action" ]]; then
-			"$action" "$long" "$value"
-			err="$?"
+		"$action" "$long" "$value"
+		err="$?"
 
-			if (( err != 0 )); then
-				return "$err"
-			fi
+		if (( err != 0 )); then
+			return "$err"
 		fi
 	done
 
