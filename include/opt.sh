@@ -24,6 +24,11 @@ __init() {
 	declare -xgir __opt_flag_required=1
 	declare -xgir __opt_flag_has_value=2
 
+	declare -xgAr __opt_flags_map=(
+		["r"]="$__opt_flag_required"
+		["v"]="$__opt_flag_has_value"
+	)
+
 	declare -Axg __opt_short
 	declare -Axg __opt_long
 	declare -Axg __opt_desc
@@ -66,6 +71,31 @@ _opt_is_defined() {
 	return 1
 }
 
+_opt_parse_flags() {
+	local flags="$1"
+
+	local -i parsed_flags
+	local -i i
+
+	for (( i = 0, parsed_flags = 0; i < ${#flags}; i++ )); do
+		local flag_name
+		local flag_value
+
+		flag_name="${flags:$i:1}"
+		flag_value="${__opt_flags_map[$flag_name]}"
+
+		if (( flag_value == 0 )); then
+			log_error "Invalid flag: $flag_name"
+			return 1
+		fi
+
+		(( parsed_flags |= flag_value ))
+	done
+
+	echo "$parsed_flags"
+	return 0
+}
+
 opt_add_arg() {
 	local short="$1"
 	local long="$2"
@@ -75,36 +105,16 @@ opt_add_arg() {
 	local regex="$6"
 	local action="$7"
 
-	local num_flags
-	local bflags
-	local i
+	local -i parsed_flags
 
-	if _opt_is_defined "-$short" "--$long"; then
+	if _opt_is_defined "-$short" "--$long" ||
+	   ! parsed_flags=$(_opt_parse_flags "$flags"); then
 		return 1
 	fi
 
-	num_flags="${#flags}"
-	bflags=0
-
-	for (( i = 0; i < num_flags; i++ )); do
-		case "${flags:$i:1}" in
-			"r")
-				((bflags |= __opt_flag_required))
-				;;
-
-			"v")
-				((bflags |= __opt_flag_has_value))
-				;;
-
-			*)
-				return 1
-				;;
-		esac
-	done
-
 	__opt_short["$long"]="$short"
 	__opt_long["$short"]="$long"
-	__opt_flags["$long"]="$bflags"
+	__opt_flags["$long"]="$parsed_flags"
 	__opt_desc["$long"]="$desc"
 	__opt_regex["$long"]="$regex"
 	__opt_action["$long"]="$action"
