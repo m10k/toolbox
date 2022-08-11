@@ -109,9 +109,12 @@ opt_add_arg() {
 	__opt_desc["$long"]="$desc"
 	__opt_regex["$long"]="$regex"
 	__opt_action["$long"]="$action"
-	__opt_default["$long"]="$default"
 	__opt_map["-$short"]="$long"
 	__opt_map["--$long"]="$long"
+
+	if [[ -n "$default" ]]; then
+		__opt_default["$long"]="$default"
+	fi
 
 	((__opt_num++))
 
@@ -233,8 +236,12 @@ opt_get() {
 
 	if array_contains "$long" "${!__opt_value[@]}"; then
 		echo "${__opt_value[$long]}"
-	else
+	elif array_contains "$long" "${!__opt_default[@]}"; then
 		echo "${__opt_default[$long]}"
+	elif [[ -n "${__opt_map[--$long]}" ]]; then
+		return 2
+	else
+		return 1
 	fi
 
 	return 0
