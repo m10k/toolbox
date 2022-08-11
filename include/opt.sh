@@ -133,15 +133,8 @@ opt_add_arg() {
 
 opt_print_help() {
 	local short
-	local shortopts
 
-	shortopts=""
-
-	for short in $(array_sort "${__opt_short[@]}"); do
-		shortopts+="$short"
-	done
-
-	echo "Usage: ${0##*/} [-$shortopts]"
+	echo "Usage: ${0##*/} [OPTIONS]"
 	echo ""
 	echo "Options"
 
