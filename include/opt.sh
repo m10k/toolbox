@@ -156,6 +156,10 @@ opt_print_help() {
 
 		printf "\t-%s\t--%s\t%s\n" \
 		       "$short" "$long" "$desc"
+		if (( ${__opt_flags["$long"]} & __opt_flag_has_value )) &&
+		   array_contains "$long" "${!__opt_default[@]}"; then
+			printf '\t\t\t(Default: %s)\n' "${__opt_default[$long]}"
+		fi
 	done | column -s $'\t' -t
 
 	return 2
