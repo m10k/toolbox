@@ -147,13 +147,11 @@ opt_print_help() {
 
 	for short in $(array_sort "${__opt_short[@]}"); do
 		local long
-		local desc
 
 		long="${__opt_map[-$short]}"
-		desc="${__opt_desc[$long]}"
 
 		printf "\t-%s\t--%s\t%s\n" \
-		       "$short" "$long" "$desc"
+		       "$short" "$long" "${__opt_desc[$long]}"
 		if (( ${__opt_flags["$long"]} & __opt_flag_has_value )) &&
 		   array_contains "$long" "${!__opt_default[@]}"; then
 			printf '\t\t\t(Default: %s)\n' "${__opt_default[$long]}"
@@ -180,8 +178,8 @@ _opt_have_required() {
 opt_parse() {
 	local argv=("$@")
 
-	local err
-	local i
+	local -i err
+	local -i i
 
 	declare -argx __opt_argv=("${argv[@]}")
 
@@ -193,7 +191,6 @@ opt_parse() {
 		local flags
 		local value
 		local action
-		local regex
 
 		param="${argv[$i]}"
 		long="${__opt_map[$param]}"
@@ -205,36 +202,33 @@ opt_parse() {
 
 		flags="${__opt_flags[$long]}"
 		action="${__opt_action[$long]}"
-		regex="${__opt_regex[$long]}"
 
 		if [[ -n "${__opt_required[$long]}" ]]; then
 			unset __opt_required["$long"]
 		fi
 
 		if (( flags & __opt_flag_has_value )); then
-			((i++))
+			local regex
 
-			if (( i >= ${#argv[@]} )); then
+			if (( ++i >= ${#argv[@]} )); then
 				log_error "Missing argument after $param"
 				return 1
 			fi
 
 			value="${argv[$i]}"
+			regex="${__opt_regex[$long]}"
 
 			if [[ -n "$regex" ]] && ! [[ "$value" =~ $regex ]]; then
 				log_error "Value \"$value\" doesn't match \"$regex\""
 				return 1
 			fi
 		else
-			value="${__opt_value[$long]}"
-			((value++))
+			value=$(( __opt_value[$long] + 1 ))
 		fi
 
 		__opt_value["$long"]="$value"
 
 		if [[ -n "$action" ]]; then
-			local err
-
 			"$action" "$long" "$value"
 			err="$?"
 
