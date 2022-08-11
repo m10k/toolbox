@@ -39,19 +39,16 @@ __init() {
 	declare -Axg __opt_map
 	declare -Axg __opt_required
 
-	opt_add_arg "h" "help" "" 0 \
-		    "Print this text" \
-		    '' \
-		    opt_print_help
+	opt_add_arg "h" "help" "" 0           \
+		    "Print this text"         \
+		    '' opt_print_help
 
-	opt_add_arg "v" "verbose" "" 0 \
-		    "Be more verbose" \
-		    '' \
-		    log_increase_verbosity
-	opt_add_arg "q" "quiet" "" 0 \
-		    "Be less verbose" \
-		    '' \
-		    log_decrease_verbosity
+	opt_add_arg "v" "verbose" "" 0        \
+		    "Be more verbose"         \
+		    '' log_increase_verbosity
+	opt_add_arg "q" "quiet" "" 0          \
+		    "Be less verbose"         \
+		    '' log_decrease_verbosity
 
 	return 0
 }
@@ -126,6 +123,10 @@ opt_add_arg() {
 
 	if (( parsed_flags & __opt_flag_required )); then
 		__opt_required["$long"]="$long"
+	fi
+
+	if ! (( parsed_flags & __opt_flag_has_value )); then
+		__opt_value["$long"]=0
 	fi
 
 	return 0
