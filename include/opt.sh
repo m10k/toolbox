@@ -122,7 +122,7 @@ opt_print_help() {
 		shortopts+="$short"
 	done
 
-	echo "Usage: $BASH_ARGV0 [-$shortopts]"
+	echo "Usage: ${0##*/} [-$shortopts]"
 	echo ""
 	echo "Options"
 
