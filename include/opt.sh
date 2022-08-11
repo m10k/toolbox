@@ -30,7 +30,6 @@ __init() {
 	)
 
 	declare -Axg __opt_short
-	declare -Axg __opt_long
 	declare -Axg __opt_desc
 	declare -Axg __opt_flags
 	declare -Axg __opt_value
@@ -114,7 +113,6 @@ opt_add_arg() {
 	fi
 
 	__opt_short["$long"]="$short"
-	__opt_long["$short"]="$long"
 	__opt_flags["$long"]="$parsed_flags"
 	__opt_desc["$long"]="$desc"
 	__opt_regex["$long"]="$regex"
@@ -151,7 +149,7 @@ opt_print_help() {
 		local long
 		local desc
 
-		long="${__opt_long[$short]}"
+		long="${__opt_map[-$short]}"
 		desc="${__opt_desc[$long]}"
 
 		printf "\t-%s\t--%s\t%s\n" \
