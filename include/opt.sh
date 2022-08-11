@@ -180,7 +180,7 @@ opt_parse() {
 		if (( flags & __opt_flag_has_value )); then
 			((i++))
 
-			if (( i > ${#argv[@]} )); then
+			if (( i >= ${#argv[@]} )); then
 				log_error "Missing argument after $param"
 				return 1
 			fi
