@@ -52,6 +52,21 @@ __init() {
 	return 0
 }
 
+_opt_is_defined() {
+	local options=("$@")
+
+	local option
+
+	for option in "${options[@]}"; do
+		if [[ -n "${__opt_map[$option]}" ]]; then
+			log_error "Option \"$option\" was already declared"
+			return 0
+		fi
+	done
+
+	return 1
+}
+
 opt_add_arg() {
 	local short="$1"
 	local long="$2"
@@ -65,8 +80,7 @@ opt_add_arg() {
 	local bflags
 	local i
 
-	if array_contains "$short" "${__opt_short[@]}" ||
-	   array_contains "$long" "${__opt_long[@]}"; then
+	if _opt_is_defined "-$short" "--$long"; then
 		return 1
 	fi
 
