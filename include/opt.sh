@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # opt.sh - Toolbox commandline parser module
-# Copyright (C) 2021 Matthias Kruk
+# Copyright (C) 2021-2022 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ __init() {
 	declare -Axg __opt_regex
 	declare -Axg __opt_action
 	declare -Axg __opt_map
-	declare -xgi __opt_num=0
 
 	opt_add_arg "h" "help" "" 0 \
 		    "Print this text" \
@@ -115,8 +114,6 @@ opt_add_arg() {
 	if [[ -n "$default" ]]; then
 		__opt_default["$long"]="$default"
 	fi
-
-	((__opt_num++))
 
 	return 0
 }
