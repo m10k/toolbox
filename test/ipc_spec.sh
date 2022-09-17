@@ -20,7 +20,7 @@
 include "ipc"
 
 setup() {
-	if ! mkdir "/tmp/test.$$"; then
+	if ! mkdir -p "/tmp/test.$$"; then
 		return 1
 	fi
 
