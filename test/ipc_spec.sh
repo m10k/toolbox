@@ -600,7 +600,7 @@ Describe "ipc_endpoint_send"
     }
 
     When call _test_ipc_endpoint_send_private
-    The status should eqal 0
+    The status should equal 0
   End
 End
 
