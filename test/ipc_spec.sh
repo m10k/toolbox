@@ -625,7 +625,7 @@ Describe "ipc_endpoint_recv"
 	    if ipc_endpoint_send "-" "$endpoint" "$data" &&
 	       msg=$(ipc_endpoint_recv "$endpoint") &&
 	       msg=$(ipc_msg_get_data "$msg") &&
-	       [[ "$msg" != "$data" ]]; then
+	       [[ "$msg" == "$data" ]]; then
 		    res=0
 	    fi
 
@@ -655,7 +655,7 @@ Describe "ipc_endpoint_recv"
 	    if ipc_endpoint_send "-" "$endpoint" "$data" &&
 	       msg=$(ipc_endpoint_recv "$endpoint") &&
 	       msg=$(ipc_msg_get_data "$msg") &&
-	       [[ "$msg" != "$data" ]]; then
+	       [[ "$msg" == "$data" ]]; then
 		    res=0
 	    fi
 
