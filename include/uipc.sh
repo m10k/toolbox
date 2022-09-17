@@ -117,6 +117,11 @@ _uipc_msg_new() {
 	local source="$1"
 	local destination="$2"
 	local data="$3"
+	local topic="$4"
+
+	# For non-pubsub messages, the topic will be unset. This will
+	# cause the topic not to show up in the JSON object because
+	# json_object() skips empty fields
 
 	local encoded_data
 	local timestamp
@@ -134,6 +139,7 @@ _uipc_msg_new() {
 				     "destination" "$destination"   \
 				     "user"        "$USER"          \
 				     "timestamp"   "$timestamp"     \
+				     "topic"       "$topic"         \
 				     "data"        "$encoded_data"); then
 		log_error "Could not make message"
 
@@ -231,6 +237,19 @@ uipc_msg_get_data() {
 	return 0
 }
 
+uipc_msg_get_topic() {
+	local msg="$1"
+
+	local topic
+
+	if ! topic=$(_uipc_msg_get "$msg" "topic"); then
+		return 1
+	fi
+
+	echo "$topic"
+	return 0
+}
+
 uipc_endpoint_open() {
 	local name="$1"
 
@@ -325,10 +344,11 @@ uipc_endpoint_send() {
 	local source="$1"
 	local destination="$2"
 	local data="$3"
+	local topic="$4"
 
 	local msg
 
-	if ! msg=$(_uipc_msg_new "$source" "$destination" "$data"); then
+	if ! msg=$(_uipc_msg_new "$source" "$destination" "$data" "$topic"); then
 		return 1
 	fi
 
@@ -467,7 +487,7 @@ uipc_endpoint_publish() {
 	fi
 
 	while read -r subscriber; do
-		uipc_endpoint_send "$endpoint" "$subscriber" "$message"
+		uipc_endpoint_send "$endpoint" "$subscriber" "$message" "$topic"
 	done < <(_uipc_endpoint_topic_get_subscribers "$topic")
 
 	return 0
