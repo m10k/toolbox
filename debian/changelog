@@ -1,3 +1,21 @@
+toolbox (0.3.4-1) unstable; urgency=medium
+
+  * Fixes
+    - ipc: Fix bug in unsubscribe logic, fix incorrect test cases, add topic
+           field to pubsub messages
+    - opt: Print correct script name on older bash versions
+  * New modules
+    - uipc: Unsigned IPC messaging (like ipc module, but without GPG)
+  * Improvements
+    - array: Improve performance of array_to_lines()
+    - mutex: Allow subprocesses to unlock parent's mutexes and vice-versa
+    - opt: Emit an error if an option is redefined, show defaults in help,
+           simplify module implementation
+    - toolbox: Print suggestions when a command was not found
+
+ -- Matthias Kruk <m@m10k.eu>  Sat, 17 Sep 2022 14:56:30 +0900
+
+
 toolbox (0.3.3-1) unstable; urgency=medium
 
   * Fixes
