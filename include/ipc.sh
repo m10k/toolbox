@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ipc.sh - Toolbox module for message-based IPC
-# Copyright (C) 2021 Matthias Kruk
+# Copyright (C) 2021-2022 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -279,6 +279,11 @@ _ipc_msg_new() {
 	local source="$1"
 	local destination="$2"
 	local data="$3"
+	local topic="$4"
+
+	# For non-pubsub messages, the topic will be unset. This will
+	# cause the topic not to show up in the JSON object because
+	# json_object() skips empty fields.
 
 	local encoded_data
 	local timestamp
@@ -299,6 +304,7 @@ _ipc_msg_new() {
 				     "destination" "$destination"   \
 				     "user"        "$USER"          \
 				     "timestamp"   "$timestamp"     \
+	                             "topic"       "$topic"         \
 				     "data"        "$encoded_data"); then
 		log_error "Could not make message"
 
@@ -403,6 +409,19 @@ ipc_msg_get_data() {
 	fi
 
 	echo "$data_raw"
+	return 0
+}
+
+ipc_msg_get_topic() {
+	local msg="$1"
+
+	local topic
+
+	if ! topic=$(_ipc_msg_get "$msg" "topic"); then
+		return 1
+	fi
+
+	echo "$topic"
 	return 0
 }
 
@@ -560,10 +579,11 @@ ipc_endpoint_send() {
 	local source="$1"
 	local destination="$2"
 	local data="$3"
+	local topic="$4"
 
 	local msg
 
-	if ! msg=$(_ipc_msg_new "$source" "$destination" "$data"); then
+	if ! msg=$(_ipc_msg_new "$source" "$destination" "$data" "$topic"); then
 		return 1
 	fi
 
@@ -706,7 +726,7 @@ ipc_endpoint_publish() {
 	fi
 
 	while read -r subscriber; do
-		ipc_endpoint_send "$endpoint" "$subscriber" "$message"
+		ipc_endpoint_send "$endpoint" "$subscriber" "$message" "$topic"
 	done < <(_ipc_endpoint_topic_get_subscribers "$topic")
 
 	return 0

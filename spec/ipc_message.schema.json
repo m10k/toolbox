@@ -21,6 +21,11 @@
 	    "type": "string"
 	},
 
+	"topic": {
+	    "description": "The topic that the message was published on",
+	    "type": "string"
+	},
+
 	"timestamp": {
 	    "description": "The UNIX timestamp when the message was sent",
 	    "type": "integer"
