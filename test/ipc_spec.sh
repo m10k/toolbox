@@ -496,10 +496,10 @@ Describe "ipc_endpoint_open"
 		    return 1
 	    fi
 
-	    res=0
+	    res=1
 
 	    if [[ "$endpoint" == "priv/"* ]]; then
-		    res=1
+		    res=0
 	    fi
 
 	    ipc_endpoint_close "$endpoint"
