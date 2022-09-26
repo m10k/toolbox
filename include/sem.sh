@@ -227,27 +227,8 @@ sem_wait() {
 sem_trywait() {
 	local name="$1"
 
-	local waitlock
-	local countlock
-	local counter
-	local err
-
-	waitlock=$(_sem_get_waitlock "$name")
-	countlock=$(_sem_get_countlock "$name")
-	counter=$(_sem_get_counter "$name")
-	err=1
-
-	if ! wmutex_trylock "$waitlock"; then
-		return 1
-	fi
-
-	if mutex_lock "$countlock"; then
-		_sem_counter_dec "$counter"
-		mutex_unlock "$countlock"
-		err=0
-	fi
-
-	return "$err"
+	sem_wait "$name" 0
+	return "$?"
 }
 
 sem_post() {
