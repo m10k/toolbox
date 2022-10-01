@@ -25,8 +25,55 @@ add_topic() {
 	return 0
 }
 
+add_hook() {
+	# local name="$1" # not needed
+	local value="$2"
+
+	local topic
+	local hook
+
+	topic="${value%%:*}"
+	hook="${value#*:}"
+
+	# hooks is inherited from main() via opt_parse()
+	hooks["$topic"]="$hook"
+}
+
 signal_handler() {
 	signal_received=1
+}
+
+output_message() {
+	local type="$1"
+	local data="$2"
+
+	local message
+
+	if ! message=$(json_object "type" "$type" \
+	                           "data" "$data"); then
+		return 1
+	fi
+
+	if ! base64 -w 0 <<< "$message"; then
+		return 1
+	fi
+
+	printf '\n'
+	return 0
+}
+
+invoke_hooks() {
+	local topic="$1"
+	local message="$2"
+
+	local data
+
+	if data=$("${hooks[$topic]}" <<< "$message") &&
+	   [[ -n "$data" ]]; then
+		output_message "HookData" "$data"
+	fi
+
+	return 0
 }
 
 tap_topics() {
@@ -62,10 +109,19 @@ tap_topics() {
 
 		while (( signal_received == 0 )); do
 			local message
+			local topic
 
-			if message=$(ipc_endpoint_recv "$endpoint" 5); then
-				printf '%s\n' "$message"
+			if ! message=$(ipc_endpoint_recv "$endpoint" 5); then
+				continue
 			fi
+
+			if ! topic=$(ipc_msg_get_topic "$message"); then
+				log_warn "Dropping message without topic"
+				continue
+			fi
+
+			invoke_hooks "$topic" "$message"
+			output_message "IPCMessage" "$message"
 		done
 	fi
 
@@ -77,10 +133,18 @@ tap_topics() {
 
 main() {
 	local topics
+	declare -gA hooks
 
 	topics=()
 
-	opt_add_arg "t" "topic" "rv" "" "A topic to tap into" "" add_topic
+	opt_add_arg "t" "topic" "rv" ""            \
+	            "A topic to tap into"          \
+	            ''                             \
+	            add_topic
+	opt_add_arg "k" "hook"  "v"  ""            \
+	            "Hook to execute upon receipt" \
+	            '^[^:]+:.+$'                   \
+	            add_hook
 
 	if ! opt_parse "$@"; then
 		return 1
@@ -98,7 +162,7 @@ main() {
 		exit 1
 	fi
 
-	if ! include "log" "opt" "ipc"; then
+	if ! include "log" "opt" "ipc" "json"; then
 		exit 1
 	fi
 
