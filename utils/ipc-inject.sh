@@ -68,12 +68,18 @@ handle_hook_data() {
 
 handle_ipc_message() {
 	local endpoint="$1"
-	local data="$2"
+	local message="$2"
 
 	local topic
+	local data
 
-	if ! topic=$(ipc_msg_get_topic "$data"); then
+	if ! topic=$(ipc_msg_get_topic "$message"); then
 		log_warn "Dropping message without topic"
+		return 1
+	fi
+
+	if ! data=$(ipc_msg_get_data "$message"); then
+		log_warn "Dropping message without data"
 		return 1
 	fi
 
