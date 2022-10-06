@@ -133,7 +133,7 @@ command_not_found_handle() {
 			if [[ "$command" == "$prefix"* ]]; then
 				candidates["$module_name"]="$module"
 			fi
-		done < <(find -L "$searchpath" -type f -iname "*.sh")
+		done < <(find -L "$searchpath" -type f -iname "*.sh" 2>/dev/null)
 	done
 
 	if (( ${#candidates[@]} > 0 )); then
