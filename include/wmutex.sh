@@ -52,7 +52,7 @@ wmutex_lock() {
 wmutex_unlock() {
 	local lock="$1"
 
-	if ! rm "$lock"; then
+	if ! rm "$lock" 2>/dev/null; then
 		return 1
 	fi
 
