@@ -25,11 +25,13 @@ install:
 	ln -sf $(PREFIX)/share/toolbox/toolbox.sh $(DESTDIR)/$(PREFIX)/bin/toolbox.sh
 	ln -sf $(PREFIX)/share/toolbox/utils/ipc-tap.sh $(DESTDIR)/$(PREFIX)/bin/ipc-tap
 	ln -sf $(PREFIX)/share/toolbox/utils/ipc-inject.sh $(DESTDIR)/$(PREFIX)/bin/ipc-inject
+	ln -sf $(PREFIX)/share/toolbox/utils/ipc-sshtunnel.sh $(DESTDIR)/$(PREFIX)/bin/ipc-sshtunnel
 
 uninstall:
 	rm $(DESTDIR)/$(PREFIX)/bin/toolbox.sh
 	rm $(DESTDIR)/$(PREFIX)/bin/ipc-tap
 	rm $(DESTDIR)/$(PREFIX)/bin/ipc-inject
+	rm $(DESTDIR)/$(PREFIX)/bin/ipc-sshtunnel
 	rm -rf $(DESTDIR)/$(PREFIX)/share/toolbox
 
 .PHONY: $(PHONY)

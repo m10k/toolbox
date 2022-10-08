@@ -1,0 +1,143 @@
+#!/bin/bash
+
+# ipc-sshtunnel.sh - Tunnel toolbox PubSub IPC messages over SSH
+# Copyright (C) 2022 Matthias Kruk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+_topic_add() {
+	local name="$1"
+	local value="$2"
+
+	declare -A map
+
+	# input_topics is inherited from main() via opt_parse()
+	# output_topics is inherited from main() via opt_parse()
+	map["input-topic"]=input_topics
+	map["output-topic"]=output_topics
+
+	if array_contains "$name" "${!map[@]}"; then
+		declare -n topic_array="${map[$name]}"
+		topic_array+=("$value")
+	else
+		log_error "Invalid option name: $name"
+		return 1
+	fi
+
+	return 0
+}
+
+local_to_remote() {
+	local remote="$1"
+	local endpoint="$2"
+	local topics=("${@:3}")
+
+	local topic
+	local args
+
+	args=()
+
+	for topic in "${topics[@]}"; do
+		args+=(--topic "$topic")
+	done
+
+	( ipc-tap "${args[@]}" | ssh "$remote" ipc-inject ) &
+	echo "$!"
+	return 0
+}
+
+remote_to_local() {
+	local remote="$1"
+	local endpoint="$2"
+	local topics=("${@:3}")
+
+	local topic
+	local args
+
+	for topic in "${topics[@]}"; do
+		args+=(--topic "$topic")
+	done
+
+	( ssh -n "$remote" ipc-tap "${args[@]}" | ipc-inject ) &
+	echo "$!"
+	return 0
+}
+
+process_is_running() {
+	local -i pid="$1"
+
+	kill -0 "$pid" &>/dev/null
+	return "$?"
+}
+
+spawn_tunnel() {
+	local tunnel_func="$1"
+	local remote="$2"
+	local topics=("${@:3}")
+
+	local -i tunnel
+
+	if tunnel=$("$tunnel_func" "$remote" "$endpoint" "${topics[@]}"); then
+		while inst_running && process_is_running "$tunnel"; do
+			sleep 5
+		done
+
+		kill "$tunnel" &>/dev/null
+	else
+		return 1
+	fi
+
+	return 0
+}
+
+main() {
+	local input_topics
+	local output_topics
+	local remote
+
+	input_topics=()
+        output_topics=()
+
+	opt_add_arg "i" "input-topic"  "v"  "" "Topic to relay from the remote side (may be used more than once)" \
+	            "" _topic_add
+	opt_add_arg "o" "output-topic" "v"  "" "Topic to relay to the remote side (may be used more than once)"   \
+	            "" _topic_add
+	opt_add_arg "r" "remote"       "rv" "" "Address of the remote side"
+
+	if ! opt_parse "$@"; then
+		return 1
+	fi
+
+	remote=$(opt_get "remote")
+
+	if ! inst_start spawn_tunnel remote_to_local "$remote" "${input_topics[@]}" ||
+	   ! inst_start spawn_tunnel local_to_remote "$remote" "${output_topics[@]}"; then
+		return 1
+	fi
+
+	return 0
+}
+
+{
+	if ! . toolbox.sh; then
+		exit 1
+	fi
+
+	if ! include "log" "opt" "inst" "ipc"; then
+		exit 1
+	fi
+
+	main "$@"
+	exit "$?"
+}
