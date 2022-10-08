@@ -67,8 +67,12 @@ invoke_hooks() {
 	local message="$2"
 
 	local data
+	local hook
 
-	if data=$("${hooks[$topic]}" <<< "$message") &&
+	hook="${hooks[$topic]}"
+
+	if [[ -n "$hook" ]] &&
+	   data=$("$hook" <<< "$message") &&
 	   [[ -n "$data" ]]; then
 		output_message "HookData" "$data"
 	fi
