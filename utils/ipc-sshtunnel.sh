@@ -120,7 +120,9 @@ main() {
 	local remote
 
 	input_topics=()
-        output_topics=()
+	output_topics=()
+	tap_hooks=()
+	inject_hooks=()
 
 	opt_add_arg "i" "input-topic"  "v"  "" "Topic to relay from the remote side (may be used more than once)" \
 	            "" _array_add
