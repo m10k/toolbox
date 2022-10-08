@@ -114,9 +114,9 @@ spawn_tunnel() {
 
 main() {
 	declare -gxa input_topics
-        declare -gxa output_topics
-        declare -gxa tap_hooks
-        declare -gxa inject_hooks
+	declare -gxa output_topics
+	declare -gxa tap_hooks
+	declare -gxa inject_hooks
 	local remote
 
 	input_topics=()
@@ -129,9 +129,9 @@ main() {
 	opt_add_arg "o" "output-topic" "v"  "" "Topic to relay to the remote side (may be used more than once)"   \
 	            "" _array_add
 	opt_add_arg "T" "tap-hook"     "v"  "" "Hook to pass to ipc-tap"                                          \
-		    "" _array_add
+	            "" _array_add
 	opt_add_arg "I" "inject-hook"  "v"  "" "Hook to pass to ipc-inject"                                       \
-		    "" _array_add
+	            "" _array_add
 	opt_add_arg "r" "remote"       "rv" "" "Address of the remote side"
 
 	if ! opt_parse "$@"; then
