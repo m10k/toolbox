@@ -44,10 +44,9 @@ _array_add() {
 
 local_to_remote() {
 	local remote="$1"
-	local endpoint="$2"
-	local -n ref_topics="$3"
-	local -n ref_tap_hooks="$4"
-	local -n ref_inject_hooks="$5"
+	local -n ref_topics="$2"
+	local -n ref_tap_hooks="$3"
+	local -n ref_inject_hooks="$4"
 
 	local topic
 	local hook
@@ -73,10 +72,9 @@ local_to_remote() {
 
 remote_to_local() {
 	local remote="$1"
-	local endpoint="$2"
-	local -n ref_topics="$3"
-	local -n ref_tap_hooks="$4"
-	local -n ref_inject_hooks="$5"
+	local -n ref_topics="$2"
+	local -n ref_tap_hooks="$3"
+	local -n ref_inject_hooks="$4"
 
 	local topic
 	local hook
@@ -116,7 +114,7 @@ spawn_tunnel() {
 
 	local -i tunnel
 
-	if tunnel=$("$tunnel_func" "$remote" "$endpoint" "$ref_topics" "$ref_tap_hooks" "$ref_inject_hooks"); then
+	if tunnel=$("$tunnel_func" "$remote" "$ref_topics" "$ref_tap_hooks" "$ref_inject_hooks"); then
 		while inst_running && process_is_running "$tunnel"; do
 			sleep 5
 		done
