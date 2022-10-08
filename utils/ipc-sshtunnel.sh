@@ -42,11 +42,12 @@ _array_add() {
 	return 0
 }
 
-local_to_remote() {
-	local remote="$1"
-	local -n ref_topics="$2"
-	local -n ref_tap_hooks="$3"
-	local -n ref_inject_hooks="$4"
+establish_ipc_tunnel() {
+	local direction="$1"
+	local remote="$2"
+	local -n ref_topics="$3"
+	local -n ref_tap_hooks="$4"
+	local -n ref_inject_hooks="$5"
 
 	local topic
 	local hook
@@ -65,35 +66,19 @@ local_to_remote() {
 		inject_args+=(--hook "$hook")
 	done
 
-	( ipc-tap "${tap_args[@]}" | ssh "$remote" ipc-inject "${inject_args[@]}" ) &
-	echo "$!"
-	return 0
-}
+	case "$direction" in
+		"in")
+			( ssh -n "$remote" ipc-tap "${tap_args[@]}" | ipc-inject "${inject_args[@]}" ) &
+			;;
+		"out")
+			( ipc-tap "${tap_args[@]}" | ssh "$remote" ipc-inject "${inject_args[@]}" ) &
+			;;
+		*)
+			log_error "Invalid direction: $direction"
+			return 1
+			;;
+	esac
 
-remote_to_local() {
-	local remote="$1"
-	local -n ref_topics="$2"
-	local -n ref_tap_hooks="$3"
-	local -n ref_inject_hooks="$4"
-
-	local topic
-	local hook
-	local tap_args
-	local inject_args
-
-	for topic in "${ref_topics[@]}"; do
-		tap_args+=(--topic "$topic")
-	done
-
-	for hook in "${ref_tap_hooks[@]}"; do
-		tap_args+=(--hook "$hook")
-	done
-
-	for hook in "${ref_inject_hooks[@]}"; do
-		inject_args+=(--hook "$hook")
-	done
-
-	( ssh -n "$remote" ipc-tap "${tap_args[@]}" | ipc-inject "${inject_args[@]}" ) &
 	echo "$!"
 	return 0
 }
@@ -106,7 +91,7 @@ process_is_running() {
 }
 
 spawn_tunnel() {
-	local tunnel_func="$1"
+	local direction="$1"
 	local remote="$2"
 	local ref_topics="$3"
 	local ref_tap_hooks="$4"
@@ -114,7 +99,7 @@ spawn_tunnel() {
 
 	local -i tunnel
 
-	if tunnel=$("$tunnel_func" "$remote" "$ref_topics" "$ref_tap_hooks" "$ref_inject_hooks"); then
+	if tunnel=$(establish_ipc_tunnel "$direction" "$remote" "$ref_topics" "$ref_tap_hooks" "$ref_inject_hooks"); then
 		while inst_running && process_is_running "$tunnel"; do
 			sleep 5
 		done
@@ -153,8 +138,8 @@ main() {
 
 	remote=$(opt_get "remote")
 
-	if ! inst_start spawn_tunnel remote_to_local "$remote" input_topics  tap_hooks inject_hooks ||
-	   ! inst_start spawn_tunnel local_to_remote "$remote" output_topics tap_hooks inject_hooks; then
+	if ! inst_start spawn_tunnel "in"  "$remote" input_topics  tap_hooks inject_hooks ||
+	   ! inst_start spawn_tunnel "out" "$remote" output_topics tap_hooks inject_hooks; then
 		return 1
 	fi
 
