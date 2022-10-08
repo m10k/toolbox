@@ -62,7 +62,7 @@ mutex_unlock() {
 		return 2
 	fi
 
-	if ! rm "$lock"; then
+	if ! rm "$lock" 2>/dev/null; then
 		return 3
 	fi
 
