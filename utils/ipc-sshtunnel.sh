@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-_topic_add() {
+_array_add() {
 	local name="$1"
 	local value="$2"
 
@@ -24,12 +24,16 @@ _topic_add() {
 
 	# input_topics is inherited from main() via opt_parse()
 	# output_topics is inherited from main() via opt_parse()
+	# tap_hooks is inherited from main() via opt_parse()
+	# inject_hooks is inherited from main() via opt_parse()
 	map["input-topic"]=input_topics
 	map["output-topic"]=output_topics
+	map["tap-hook"]=tap_hooks
+	map["inject-hook"]=inject_hooks
 
 	if array_contains "$name" "${!map[@]}"; then
-		declare -n topic_array="${map[$name]}"
-		topic_array+=("$value")
+		declare -n target_array="${map[$name]}"
+		target_array+=("$value")
 	else
 		log_error "Invalid option name: $name"
 		return 1
@@ -41,18 +45,28 @@ _topic_add() {
 local_to_remote() {
 	local remote="$1"
 	local endpoint="$2"
-	local topics=("${@:3}")
+	local -n ref_topics="$3"
+	local -n ref_tap_hooks="$4"
+	local -n ref_inject_hooks="$5"
 
 	local topic
-	local args
+	local hook
+	local tap_args
+	local inject_args
 
-	args=()
-
-	for topic in "${topics[@]}"; do
-		args+=(--topic "$topic")
+	for topic in "${ref_topics[@]}"; do
+		tap_args+=(--topic "$topic")
 	done
 
-	( ipc-tap "${args[@]}" | ssh "$remote" ipc-inject ) &
+	for hook in "${ref_tap_hooks[@]}"; do
+		tap_args+=(--hook "$hook")
+	done
+
+	for hook in "${ref_inject_hooks[@]}"; do
+		inject_args+=(--hook "$hook")
+	done
+
+	( ipc-tap "${tap_args[@]}" | ssh "$remote" ipc-inject "${inject_args[@]}" ) &
 	echo "$!"
 	return 0
 }
@@ -60,16 +74,28 @@ local_to_remote() {
 remote_to_local() {
 	local remote="$1"
 	local endpoint="$2"
-	local topics=("${@:3}")
+	local -n ref_topics="$3"
+	local -n ref_tap_hooks="$4"
+	local -n ref_inject_hooks="$5"
 
 	local topic
-	local args
+	local hook
+	local tap_args
+	local inject_args
 
-	for topic in "${topics[@]}"; do
-		args+=(--topic "$topic")
+	for topic in "${ref_topics[@]}"; do
+		tap_args+=(--topic "$topic")
 	done
 
-	( ssh -n "$remote" ipc-tap "${args[@]}" | ipc-inject ) &
+	for hook in "${ref_tap_hooks[@]}"; do
+		tap_args+=(--hook "$hook")
+	done
+
+	for hook in "${ref_inject_hooks[@]}"; do
+		inject_args+=(--hook "$hook")
+	done
+
+	( ssh -n "$remote" ipc-tap "${tap_args[@]}" | ipc-inject "${inject_args[@]}" ) &
 	echo "$!"
 	return 0
 }
@@ -84,11 +110,13 @@ process_is_running() {
 spawn_tunnel() {
 	local tunnel_func="$1"
 	local remote="$2"
-	local topics=("${@:3}")
+	local ref_topics="$3"
+	local ref_tap_hooks="$4"
+	local ref_inject_hooks="$5"
 
 	local -i tunnel
 
-	if tunnel=$("$tunnel_func" "$remote" "$endpoint" "${topics[@]}"); then
+	if tunnel=$("$tunnel_func" "$remote" "$endpoint" "$ref_topics" "$ref_tap_hooks" "$ref_inject_hooks"); then
 		while inst_running && process_is_running "$tunnel"; do
 			sleep 5
 		done
@@ -102,17 +130,23 @@ spawn_tunnel() {
 }
 
 main() {
-	local input_topics
-	local output_topics
+	declare -gxa input_topics
+        declare -gxa output_topics
+        declare -gxa tap_hooks
+        declare -gxa inject_hooks
 	local remote
 
 	input_topics=()
         output_topics=()
 
 	opt_add_arg "i" "input-topic"  "v"  "" "Topic to relay from the remote side (may be used more than once)" \
-	            "" _topic_add
+	            "" _array_add
 	opt_add_arg "o" "output-topic" "v"  "" "Topic to relay to the remote side (may be used more than once)"   \
-	            "" _topic_add
+	            "" _array_add
+	opt_add_arg "T" "tap-hook"     "v"  "" "Hook to pass to ipc-tap"                                          \
+		    "" _array_add
+	opt_add_arg "I" "inject-hook"  "v"  "" "Hook to pass to ipc-inject"                                       \
+		    "" _array_add
 	opt_add_arg "r" "remote"       "rv" "" "Address of the remote side"
 
 	if ! opt_parse "$@"; then
@@ -121,8 +155,8 @@ main() {
 
 	remote=$(opt_get "remote")
 
-	if ! inst_start spawn_tunnel remote_to_local "$remote" "${input_topics[@]}" ||
-	   ! inst_start spawn_tunnel local_to_remote "$remote" "${output_topics[@]}"; then
+	if ! inst_start spawn_tunnel remote_to_local "$remote" input_topics  tap_hooks inject_hooks ||
+	   ! inst_start spawn_tunnel local_to_remote "$remote" output_topics tap_hooks inject_hooks; then
 		return 1
 	fi
 
