@@ -19,24 +19,24 @@ that ship with toolbox, or create your own ones.
 
 All you have to do is source *toolbox.sh* and you can start using
 the `include()` function. For example, the following code is a
-minimal publisher using the *ipc* module.
+minimal publisher using the *uipc* module.
 
     . toolbox.sh
-    include "ipc"
+    include "uipc"
 
-    endp=$(ipc_endpoint_open)
-    ipc_endpoint_publish "$endp" "mytopic" "Hello world"
+    endp=$(uipc_endpoint_open)
+    uipc_endpoint_publish "$endp" "mytopic" "Hello world"
 
 And this is the corresponding subscriber.
 
     . toolbox.sh
-    include "ipc"
+    include "uipc"
 
-    endp=$(ipc_endpoint_open)
-    ipc_endpoint_subscribe "$endp" "mytopic"
+    endp=$(uipc_endpoint_open)
+    uipc_endpoint_subscribe "$endp" "mytopic"
 
-    if msg=$(ipc_endpoint_recv "$endp"); then
-    	data=$(ipc_msg_get_data "$msg")
+    if msg=$(uipc_endpoint_recv "$endp"); then
+    	data=$(uipc_msg_get_data "$msg")
 
     	echo "Received message: $data"
     fi
@@ -54,7 +54,7 @@ used for.
 | conf   | Configuration handling |
 | git    | Interacting with git repositories |
 | inst   | Writing daemons |
-| ipc    | Message-based IPC |
+| ipc    | Message-based IPC (GPG-signed messages) |
 | is     | Checking the value of variables |
 | json   | Handling JSON data |
 | log    | Logging and debugging |
@@ -62,6 +62,7 @@ used for.
 | opt    | Command line parsing |
 | queue  | "Thread"-safe FIFOs |
 | sem    | Process synchronization (similar to POSIX semaphores) |
+| uipc   | Message-based IPC (unsigned messages) |
 | wmutex | Weak (owner-less) locks |
 
 
