@@ -65,6 +65,8 @@ used for.
 | uipc   | Message-based IPC (unsigned messages) |
 | wmutex | Weak (owner-less) locks |
 
+Modules are described in detail in the [module reference](docs/reference.md)
+
 
 ## Installation
 
