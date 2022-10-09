@@ -23,7 +23,7 @@ minimal publisher using the *ipc* module.
 
     . toolbox.sh
     include "ipc"
-    
+
     endp=$(ipc_endpoint_open)
     ipc_endpoint_publish "$endp" "mytopic" "Hello world"
 
@@ -31,13 +31,13 @@ And this is the corresponding subscriber.
 
     . toolbox.sh
     include "ipc"
-    
+
     endp=$(ipc_endpoint_open)
     ipc_endpoint_subscribe "$endp" "mytopic"
-    
+
     if msg=$(ipc_endpoint_recv "$endp"); then
     	data=$(ipc_msg_get_data "$msg")
-    
+
     	echo "Received message: $data"
     fi
 
@@ -76,7 +76,7 @@ If you are using a Debian-based distribution, you can install toolbox through ap
 First, import the GPG key used to sign packages in the repository and make sure you
 have `apt-transport-https` installed.
 
-    # wget -O - -- https://deb.m10k.eu/deb.m10k.eu.gpg.key | apt-key add -
+    # curl --get https://deb.m10k.eu/deb.m10k.eu.gpg > /etc/apt/trusted.gpg.d/deb.m10k.eu.gpg
     # apt-get install apt-transport-https
 
 Then add the following line to your `/etc/apt/sources.lst`.
