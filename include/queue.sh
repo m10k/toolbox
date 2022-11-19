@@ -186,6 +186,7 @@ queue_put() {
 	local mutex
 	local sem
 	local data
+	local encoded_item
 	local err
 
 	mutex=$(_queue_get_mutex "$queue")
@@ -193,9 +194,13 @@ queue_put() {
 	data=$(_queue_get_data "$queue")
 	err=0
 
+	if ! encoded_item=$(base64 -w 0 <<< "$item"); then
+		return 1
+	fi
+
 	mutex_lock "$mutex"
 
-	if ! echo "$item" >> "$data"; then
+	if ! echo "$encoded_item" >> "$data"; then
 		err=1
 	fi
 
@@ -217,6 +222,7 @@ queue_get() {
 	local sem
 	local mutex
 	local data
+	local encoded_item
 	local item
 	local err
 
@@ -236,7 +242,7 @@ queue_get() {
 
 	mutex_lock "$mutex"
 
-	if ! item=$(head -n 1 "$data" 2>/dev/null); then
+	if ! encoded_item=$(head -n 1 "$data" 2>/dev/null); then
 		err=true
 	else
 		if ! sed -i '1d' "$data" &>/dev/null; then
@@ -247,6 +253,10 @@ queue_get() {
 	mutex_unlock "$mutex"
 
 	if "$err"; then
+		return 1
+	fi
+
+	if ! item=$(base64 -d <<< "$encoded_item"); then
 		return 1
 	fi
 
@@ -261,7 +271,7 @@ queue_foreach() {
 
 	local data
 	local mutex
-	local item
+	local encoded_item
 	local err
 
 	data=$(_queue_get_data "$name")
@@ -273,7 +283,13 @@ queue_foreach() {
 	fi
 
 	if [ -f "$data" ]; then
-		while read -r item; do
+		while read -r encoded_item; do
+			local item
+
+			if ! item=$(base64 -d <<< "$encoded_item"); then
+				continue
+			fi
+
 			if ! "$func" "$item" "${args[@]}"; then
 				err=1
 				break
