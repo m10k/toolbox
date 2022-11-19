@@ -38,39 +38,26 @@ __init() {
 		return 1
 	fi
 
-	opt_add_arg "l" "list" ""  0  "List running instances"  ''         _inst_handle_opt
-	opt_add_arg "s" "stop" "v" "" "Stop a running instance" '^[0-9]+$' _inst_handle_opt
+	opt_add_arg "l" "list" ""  0  "List running instances"  ''         _inst_handle_opt_list
+	opt_add_arg "s" "stop" "v" "" "Stop a running instance" '^[0-9]+$' _inst_handle_opt_stop
 
 	return 0
 }
 
-_inst_handle_opt() {
+_inst_handle_opt_stop() {
 	local opt="$1"
 	local arg="$2"
 
-	local ret
+	inst_stop "$arg" "$__inst_name"; then
+	exit "$?"
+}
 
-	ret=0
+_inst_handle_opt_list() {
+	local opt="$1"
+	local arg="$2"
 
-	case "$opt" in
-		"stop")
-			if ! inst_stop "$arg" "$__inst_name"; then
-				ret=1
-			fi
-			;;
-
-		"list")
-			if ! inst_list "$__inst_name"; then
-				ret=1
-			fi
-			;;
-
-		*)
-			ret=1
-			;;
-	esac
-
-	exit "$ret"
+	inst_list "$__inst_name"
+	exit "$?"
 }
 
 inst_list() {
