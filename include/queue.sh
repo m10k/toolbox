@@ -142,15 +142,18 @@ queue_init() {
 
 	local path
 	local sem
+	local data
 
         path=$(_queue_get_path "$queue")
 	sem=$(_queue_get_sem "$queue")
+	data=$(_queue_get_data "$queue")
 
 	if ! mkdir "$path" &> /dev/null; then
 		return 1
 	fi
 
-	if ! sem_init "$sem" 0; then
+	if ! sem_init "$sem" 0 ||
+	   ! touch "$data"; then
 		rmdir "$path" &> /dev/null
 		return 1
 	fi
