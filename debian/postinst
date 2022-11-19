@@ -20,7 +20,7 @@ main() {
 
 	if addgroup toolbox_ipc; then
 		if ! dpkg-statoverride --list /var/lib/toolbox/ipc >/dev/null 2>&1; then
-			dpkg-statoverride --update --add root toolbox_ipc 0770 /var/lib/toolbox/ipc
+			dpkg-statoverride --update --add root toolbox_ipc 2770 /var/lib/toolbox/ipc
 		fi
 	fi
 

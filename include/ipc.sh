@@ -505,7 +505,8 @@ ipc_endpoint_open() {
 		fi
 
 		if ! queue_init "$endpoint/queue" ||
-		   ! echo "$USER" > "$endpoint/owner"; then
+		   ! echo "$USER" > "$endpoint/owner" ||
+		   ! chmod -R g+rwxs "$endpoint"; then
 			if ! rm -rf "$endpoint"; then
 				log_error "Could not clean up $endpoint"
 			fi
