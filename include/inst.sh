@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # inst.sh - Toolbox module for daemonized scripts
-# Copyright (C) 2021 Matthias Kruk
+# Copyright (C) 2021-2022 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,8 @@ __init() {
 	fi
 
 	declare -xgr __inst_name="$name"
-	declare -xgr __inst_path="$TOOLBOX_HOME/inst/$__inst_name"
+	declare -xgr __inst_root="$TOOLBOX_HOME/inst"
+	declare -xgr __inst_path="$__inst_root/$__inst_name"
 
 	if ! mkdir -p "$__inst_path"; then
 		return 1
@@ -81,7 +82,7 @@ inst_list() {
 	if [[ -z "$instname" ]]; then
 		instname="$__inst_name"
 	fi
-	instpath="$TOOLBOX_HOME/inst/$instname"
+	instpath="$__inst_root/$instname"
 
 	while read -r sem; do
 		local owner
@@ -130,7 +131,7 @@ inst_stop() {
 	if [[ -z "$instname" ]]; then
 		instname="$__inst_name"
 	fi
-	instpath="$TOOLBOX_HOME/inst/$instname"
+	instpath="$__inst_root/$instname"
 
 	sem="$instpath/$pid"
 
@@ -237,7 +238,7 @@ inst_get_status() {
 	if [[ -z "$instname" ]]; then
 		instname="$__inst_name"
 	fi
-	instpath="$TOOLBOX_HOME/inst/$instname"
+	instpath="$__inst_root/$instname"
 
 	if ! status=$(< "$instpath/$pid.status"); then
 		log_error "Could not read from $instpath/$pid.status"
@@ -283,7 +284,7 @@ inst_count() {
 	if [[ -z "$instname" ]]; then
 		instname="$__inst_name"
 	fi
-	instpath="$TOOLBOX_HOME/inst/$instname"
+	instpath="$__inst_root/$instname"
 
         if ! num=$(find "$instpath" -regex ".*/[0-9]+" | wc -l); then
                 return 1
