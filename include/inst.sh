@@ -31,7 +31,7 @@ __init() {
 	fi
 
 	declare -xgr __inst_name="$name"
-	declare -xgr __inst_root="$TOOLBOX_HOME/inst"
+	declare -xgr __inst_root="/tmp/$USER/toolbox/inst"
 	declare -xgr __inst_path="$__inst_root/$__inst_name"
 
 	if ! mkdir -p "$__inst_path"; then
