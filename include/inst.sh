@@ -175,7 +175,7 @@ _inst_run() {
 		return 1
 	fi
 
-	trap _inst_stop_self INT HUP TERM EXIT QUIT
+	trap _inst_stop_self INT HUP TERM
 
 	if ! "$cmd" "${args[@]}"; then
 		ret=1
@@ -187,7 +187,7 @@ _inst_run() {
 		log_error "Could not destroy semaphore $__inst_sem"
 	fi
 
-	return "$ret"
+	exit "$ret"
 }
 
 inst_start() {
