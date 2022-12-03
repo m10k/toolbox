@@ -48,7 +48,7 @@ _inst_handle_opt_stop() {
 	local opt="$1"
 	local arg="$2"
 
-	inst_stop "$arg" "$__inst_name"; then
+	inst_stop "$arg" "$__inst_name"
 	exit "$?"
 }
 
