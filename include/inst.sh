@@ -45,6 +45,7 @@ __init() {
 }
 
 _inst_handle_opt_stop() {
+	# shellcheck disable=SC2034 # Reason: All function parameters must be declared (toolbox convention)
 	local opt="$1"
 	local arg="$2"
 
@@ -53,7 +54,9 @@ _inst_handle_opt_stop() {
 }
 
 _inst_handle_opt_list() {
+	# shellcheck disable=SC2034 # Reason: All function parameters must be declared (toolbox convention)
 	local opt="$1"
+	# shellcheck disable=SC2034 # Reason: All function parameters must be declared (toolbox convention)
 	local arg="$2"
 
 	inst_list "$__inst_name"
