@@ -42,13 +42,16 @@ __toolbox_init() {
 		"$TOOLBOX_HOME/include"
 		"$toolboxroot/include"
 	)
-
+	declare -Axg __TOOLBOX_INTERFACES
 	declare -Axg __TOOLBOX_INCLUDED
 
 	readonly -f have
 	readonly -f _try_include
 	readonly -f include
 	readonly -f command_not_found_handle
+	readonly -f interface
+	readonly -f implements
+	readonly -f calling_module
 
 	return 0
 }
@@ -153,6 +156,94 @@ command_not_found_handle() {
 	fi
 
 	return 127
+}
+
+calling_module() {
+	local modpath
+	local modfile
+	local modname
+
+	modpath="${BASH_SOURCE[2]}" # /path/to/module.sh
+	modfile="${modpath##*/}"    # module.sh
+	modname="${modfile%.*}"     # module
+
+	echo "$modname"
+	return 0
+}
+
+interface() {
+	local methods=("$@")
+
+	local name
+	local method
+	local call_stubs
+	local vtable_name
+	local -n interface
+
+	if ! name=$(calling_module); then
+		echo "ERROR: Could not determine name of module" 1>&2
+		return 1
+	fi
+
+	call_stubs=""
+	vtable_name="__TOOLBOX_INTERFACE_$name"
+
+	# Create the vtable for the interface
+	declare -Agx "$vtable_name"
+
+	interface="$vtable_name"
+
+	__TOOLBOX_INTERFACES["$name"]="$vtable_name"
+
+	# Generate and load call stubs that execute the functions referenced by the vtable
+	for method in "${methods[@]}"; do
+		# shellcheck disable=SC2016 # Reason: Don't want expansion in the format string
+		call_stubs+=$(printf '\n%s() {\n\t"${%s["%s"]}" "$@"\n\treturn "$?"\n}' \
+				     "${name}_$method" "$vtable_name" "$method")
+	done
+
+	# shellcheck disable=SC1090 # Reason: Dynamically generated call-stubs can't be checked
+	if ! source <(echo "$call_stubs"); then
+		echo "ERROR: Could not generate call stubs for interface $name" 1>&2
+		return 1
+	fi
+
+	# Set the entries in the vtable
+	for method in "${methods[@]}"; do
+		interface["$method"]="_${name}_$method"
+	done
+
+	return 0
+}
+
+implements() {
+	local iface="$1"
+
+	local module
+	local method
+	declare -n interface
+
+	if [[ -z "${__TOOLBOX_INTERFACES[$iface]}" ]]; then
+		echo "ERROR: Unknown interface: \"$iface\"" 1>&2
+		return 1
+	fi
+
+	interface="${__TOOLBOX_INTERFACES[$iface]}"
+	module=$(calling_module)
+
+	# Check if all methods are implemented before modifying the vtable
+	for method in "${!interface[@]}"; do
+		if ! declare -f "${module}_$method" &>/dev/null; then
+			echo "ERROR: Module $module does not implement the method \"$method\"" 1>&2
+			return 1
+		fi
+	done
+
+	for method in "${!interface[@]}"; do
+		interface["$method"]="${module}_$method"
+	done
+
+	return 0
 }
 
 {
