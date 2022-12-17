@@ -28,20 +28,26 @@ Describe "opt_add_arg() - Attributes"
   Parameters
   "r"    0 "accepts"
   "v"    0 "accepts"
+  "a"    0 "accepts"         "array"
   "rv"   0 "accepts"
+  "rva"  0 "accepts"         "array"
   "vr"   0 "accepts"
   "rvrv" 0 "accepts"
   "x"    1 "does not accept"
+  "a"    1 "does not accept"
   End
 
   _test_opt_add_arg_attr() (
 	  local attr="$1"
+	  local default="$2"
 
-	  opt_add_arg "o" "opt" "$attr" 2>/dev/null
+	  declare -a array
+
+	  opt_add_arg "o" "opt" "$attr" "$default" 2>/dev/null
   )
 
   It "$3 the attribute '$1'"
-    When call _test_opt_add_arg_attr "$1"
+    When call _test_opt_add_arg_attr "$1" "$4"
     The status should equal "$2"
   End
 End
@@ -142,6 +148,53 @@ Describe "opt_parse()"
 
     When call _test_opt_parse_callback_retval
     The status should equal 123
+  End
+
+  It "adds elements to an array"
+    _test_opt_parse_array_append() (
+	    declare -a array
+	    declare -a expected
+
+	    expected=(
+		    123
+	    )
+
+	    opt_add_arg "o" "opt" "a" "array"
+	    opt_parse "-o" "123"
+
+	    array_identical array expected
+	    return "$?"
+    )
+
+    When call _test_opt_parse_array_append
+    The status should equal 0
+  End
+
+  It "does not overwrite existing elements"
+    _test_opt_parse_array_no_overwrite() (
+	    declare -a array
+	    declare -a expected
+
+	    array=(
+		    123
+		    234
+	    )
+	    expected=(
+		    123
+		    234
+		    345
+		    456
+	    )
+
+	    opt_add_arg "o" "opt" "a" "array"
+	    opt_parse "-o" "345" "--opt" "456"
+
+	    array_identical array expected
+	    return "$?"
+    )
+
+    When call _test_opt_parse_array_no_overwrite
+    The status should equal 0
   End
 End
 

@@ -23,10 +23,12 @@ __init() {
 
 	declare -xgir __opt_flag_required=1
 	declare -xgir __opt_flag_has_value=2
+	declare -xgir __opt_flag_is_array=6 # is_array implies has_value
 
 	declare -xgAr __opt_flags_map=(
 		["r"]="$__opt_flag_required"
 		["v"]="$__opt_flag_has_value"
+		["a"]="$__opt_flag_is_array"
 	)
 
 	declare -Axg __opt_short
@@ -109,6 +111,12 @@ opt_add_arg() {
 		return 1
 	fi
 
+	if (( ( parsed_flags & __opt_flag_is_array ) == __opt_flag_is_array )) &&
+	   ! declare -p "$default" &>/dev/null; then
+		log_error "Default value of array options must be the name of an array"
+		return 1
+	fi
+
 	__opt_short["$long"]="$short"
 	__opt_flags["$long"]="$parsed_flags"
 	__opt_desc["$long"]="$desc"
@@ -148,7 +156,17 @@ opt_print_help() {
 		       "$short" "$long" "${__opt_desc[$long]}"
 		if (( ${__opt_flags["$long"]} & __opt_flag_has_value )) &&
 		   array_contains "$long" "${!__opt_default[@]}"; then
-			printf '\t\t\t(Default: %s)\n' "${__opt_default[$long]}"
+			if (( ${__opt_flags["$long"]} & __opt_flag_is_array )); then
+				local -n __opt_print_help_array="${__opt_default[$long]}"
+
+				if (( ${#__opt_print_help_array[@]} > 0 )); then
+					printf '\t\t\t(Default:\n'
+					printf '\t\t\t     %s\n' "${__opt_print_help_array[@]}"
+					printf '\t\t\t)\n'
+				fi
+			else
+				printf '\t\t\t(Default: %s)\n' "${__opt_default[$long]}"
+			fi
 		fi
 	done | column -s $'\t' -t
 
@@ -215,6 +233,11 @@ opt_parse() {
 			if ! [[ "$value" =~ $regex ]]; then
 				log_error "Value \"$value\" doesn't match \"$regex\""
 				return 1
+			fi
+
+			if (( ( flags & __opt_flag_is_array ) == __opt_flag_is_array )); then
+				local -n __opt_parse_array="${__opt_default[$long]}"
+				__opt_parse_array+=("$value")
 			fi
 		else
 			value=$(( __opt_value[$long] + 1 ))
