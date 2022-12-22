@@ -19,17 +19,26 @@
 __toolbox_init() {
 	local toolboxpath
 	local toolboxroot
+	local scriptpath
+	local scriptroot
 
 	if ! toolboxpath=$(realpath "${BASH_SOURCE[0]}"); then
 		echo "Could not determine toolbox path" 1>&2
 		return 1
 	fi
 
+	if ! scriptpath=$(realpath "${BASH_SOURCE[-1]}"); then
+		echo "Could not determine script path" 1>&2
+		return 1
+	fi
+
 	toolboxroot="${toolboxpath%/*}"
+	scriptroot="${scriptpath%/*}"
 
 	declare -gxr TOOLBOX_PATH="$toolboxroot"
 	declare -gxr TOOLBOX_HOME="$HOME/.toolbox"
 	declare -axgr __TOOLBOX_MODULEPATH=(
+		"$scriptroot/include"
 		"$TOOLBOX_HOME/include"
 		"$toolboxroot/include"
 	)
