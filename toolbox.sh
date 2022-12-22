@@ -52,6 +52,7 @@ __toolbox_init() {
 	readonly -f interface
 	readonly -f implements
 	readonly -f calling_module
+	readonly -f method_not_implemented
 
 	return 0
 }
@@ -171,6 +172,16 @@ calling_module() {
 	return 0
 }
 
+method_not_implemented() {
+	local method
+
+	method="${FUNCNAME[1]}"
+	method="${method#_}"
+
+	echo "ERROR: $method: Not implemented" 1>&2
+	return 127
+}
+
 interface() {
 	local methods=("$@")
 
@@ -210,7 +221,7 @@ interface() {
 
 	# Set the entries in the vtable
 	for method in "${methods[@]}"; do
-		interface["$method"]="_${name}_$method"
+		interface["$method"]=method_not_implemented
 	done
 
 	return 0
