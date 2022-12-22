@@ -234,6 +234,10 @@ implements() {
 	local method
 	declare -n interface
 
+	if ! include "$iface"; then
+		return 1
+	fi
+
 	if [[ -z "${__TOOLBOX_INTERFACES[$iface]}" ]]; then
 		echo "ERROR: Unknown interface: \"$iface\"" 1>&2
 		return 1
