@@ -17,18 +17,21 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 __toolbox_init() {
-	local modpath
+	local toolboxpath
+	local toolboxroot
 
-	if ! modpath="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"; then
+	if ! toolboxpath=$(realpath "${BASH_SOURCE[0]}"); then
 		echo "Could not determine toolbox path" 1>&2
 		return 1
 	fi
 
-	declare -gxr TOOLBOX_PATH="$modpath"
+	toolboxroot="${toolboxpath%/*}"
+
+	declare -gxr TOOLBOX_PATH="$toolboxroot"
 	declare -gxr TOOLBOX_HOME="$HOME/.toolbox"
 	declare -axgr __TOOLBOX_MODULEPATH=(
 		"$TOOLBOX_HOME/include"
-		"$modpath/include"
+		"$toolboxroot/include"
 	)
 
 	declare -Axg __TOOLBOX_INCLUDED
