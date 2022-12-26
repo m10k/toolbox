@@ -15,6 +15,7 @@ install:
 	mkdir -p $(DESTDIR)/$(PREFIX)/share/toolbox
 	mkdir -p $(DESTDIR)/$(PREFIX)/bin
 	mkdir -p $(DESTDIR)/var/lib/toolbox/ipc
+	mkdir -p $(DESTDIR)/var/lib/toolbox/uipc
 	cp toolbox.sh $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	cp -r include $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	cp -r utils   $(DESTDIR)/$(PREFIX)/share/toolbox/.

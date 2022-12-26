@@ -22,6 +22,10 @@ main() {
 		if ! dpkg-statoverride --list /var/lib/toolbox/ipc >/dev/null 2>&1; then
 			dpkg-statoverride --update --add root toolbox_ipc 2770 /var/lib/toolbox/ipc
 		fi
+
+		if ! dpkg-statoverride --list /var/lib/toolbox/uipc >/dev/null 2>&1; then
+			dpkg-statoverride --update --add root toolbox_ipc 2770 /var/lib/toolbox/uipc
+		fi
 	fi
 
 	return 0
