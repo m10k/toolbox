@@ -559,23 +559,6 @@ _ipc_endpoint_put() {
 	return 0
 }
 
-_ipc_endpoint_get() {
-	local endpoint="$1"
-	local -i timeout="$2"
-
-	local queue
-	local msg
-
-	queue="$__ipc_root/$endpoint/queue"
-
-	if ! msg=$(queue_get "$queue" "$timeout"); then
-		return 1
-	fi
-
-	echo "$msg"
-	return 0
-}
-
 ipc_endpoint_send() {
 	local source="$1"
 	local destination="$2"
@@ -597,57 +580,19 @@ ipc_endpoint_send() {
 
 ipc_endpoint_recv() {
 	local endpoint="$1"
-	local -i timeout="$2"
+	local -i timeout="${2--1}"
 
-	local -i start
+	local queue
+	local msg
 
-	if (( $# < 2 )); then
-		timeout=-1
+	queue="$__ipc_root/$endpoint/queue"
+
+	if ! msg=$(queue_get "$queue" "$timeout"); then
+		return 1
 	fi
 
-	if ! start=$(date +"%s"); then
-		return 2
-	fi
-
-	while true; do
-		local msg
-		local -i elapsed
-		local -i remaining
-
-		remaining="$timeout"
-
-		if (( timeout > 0 )); then
-			local now
-
-			if ! now=$(date +"%s"); then
-				return 2
-			fi
-
-			elapsed=$((now - start))
-			remaining=$((timeout - elapsed))
-
-			# Remaining must not be negative because _ipc_endpoint_get() takes
-			# that to mean "block (possibly forever) until a message arrives"
-			if (( remaining < 0 )); then
-				remaining=0
-			fi
-		fi
-
-		if msg=$(_ipc_endpoint_get "$endpoint" "$remaining"); then
-			if ipc_msg_validate "$msg"; then
-				echo "$msg"
-				return 0
-			fi
-
-			log_info "Dropping invalid message on $endpoint"
-		fi
-
-		if (( remaining == 0 )); then
-			break
-		fi
-	done
-
-	return 1
+	echo "$msg"
+	return 0
 }
 
 _ipc_endpoint_topic_create() {
