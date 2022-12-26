@@ -113,8 +113,8 @@ To install toolbox from git, check out the sources and run `make install`.
 You will also need to create the *toolbox* and *toolbox_ipc* groups and change
 ownership on */var/lib/toolbox* and */var/lib/toolbox/ipc*.
 
-    # chown root.toolbox /var/lib/toolbox
-    # chown root.toolbox_ipc /var/lib/toolbox/ipc
+    # chown root:toolbox /var/lib/toolbox
+    # chown root:toolbox_ipc /var/lib/toolbox/ipc
 
 
 ### Configuration

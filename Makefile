@@ -18,7 +18,7 @@ install:
 	cp toolbox.sh $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	cp -r include $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	cp -r utils   $(DESTDIR)/$(PREFIX)/share/toolbox/.
-	chown -R root.root $(DESTDIR)/$(PREFIX)/share/toolbox
+	chown -R root:root $(DESTDIR)/$(PREFIX)/share/toolbox
 	find $(DESTDIR)/$(PREFIX)/share/toolbox -type d -exec chmod 755 {} \;
 	find $(DESTDIR)/$(PREFIX)/share/toolbox -type f -exec chmod 644 {} \;
 	chmod -R 755 $(DESTDIR)/$(PREFIX)/share/toolbox
