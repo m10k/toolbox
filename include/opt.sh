@@ -149,14 +149,16 @@ opt_print_help() {
 
 	for short in $(array_sort "${__opt_short[@]}"); do
 		local long
+		local -i flags
 
 		long="${__opt_map[-$short]}"
+		flags="${__opt_flags[$long]}"
 
 		printf "\t-%s\t--%s\t%s\n" \
 		       "$short" "$long" "${__opt_desc[$long]}"
-		if (( ${__opt_flags["$long"]} & __opt_flag_has_value )) &&
+		if (( flags & __opt_flag_has_value )) &&
 		   array_contains "$long" "${!__opt_default[@]}"; then
-			if (( ${__opt_flags["$long"]} & __opt_flag_is_array )); then
+			if (( ( flags & __opt_flag_is_array ) == __opt_flag_is_array )); then
 				local -n __opt_print_help_array="${__opt_default[$long]}"
 
 				if (( ${#__opt_print_help_array[@]} > 0 )); then
