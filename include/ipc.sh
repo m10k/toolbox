@@ -22,18 +22,9 @@ __init() {
 	fi
 
 	declare -gxr  __ipc_root="/var/lib/toolbox/ipc"
-	declare -gxr  __ipc_public="$__ipc_root/pub"
-	declare -gxr  __ipc_private="$__ipc_root/priv/$USER"
-	declare -gxr  __ipc_group="toolbox_ipc"
 	declare -gxr  __ipc_pubsub_root="$__ipc_root/pubsub"
 
 	declare -gxir __ipc_version=1
-
-	if ! mkdir -p "$__ipc_private" ||
-	   ! chgrp "$__ipc_group" "$__ipc_private"; then
-		log_error "Could not initialize private IPC directory $__ipc_private"
-		return 1
-	fi
 
 	return 0
 }
@@ -494,7 +485,7 @@ ipc_endpoint_open() {
 		local self
 
 		self="${0##*/}"
-		name="priv/$USER/$self.$$.$(date +"%s").$RANDOM"
+		name="priv/$USER.$self.$$.$(date +"%s").$RANDOM"
 	fi
 
 	endpoint="$__ipc_root/$name"
