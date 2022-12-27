@@ -15,8 +15,9 @@ install:
 	mkdir -p $(DESTDIR)/$(PREFIX)/share/toolbox
 	mkdir -p $(DESTDIR)/$(PREFIX)/bin
 	mkdir -p $(DESTDIR)/var/lib/toolbox/ipc/{pub,priv,pubsub}
-	mkdir -p $(DESTDIR)/var/lib/toolbox/uipc
+	mkdir -p $(DESTDIR)/var/lib/toolbox/uipc/{pub,priv,pubsub}
 	chmod -R g+rwxs $(DESTDIR)/var/lib/toolbox/ipc
+	chmod -R g+rwxs $(DESTDIR)/var/lib/toolbox/uipc
 	cp toolbox.sh $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	cp -r include $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	cp -r utils   $(DESTDIR)/$(PREFIX)/share/toolbox/.

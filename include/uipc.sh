@@ -22,18 +22,9 @@ __init() {
 	fi
 
 	declare -gxr  __uipc_root="/var/lib/toolbox/uipc"
-	declare -gxr  __uipc_public="$__uipc_root/pub"
-	declare -gxr  __uipc_private="$__uipc_root/priv/$USER"
-	declare -gxr  __uipc_group="toolbox_ipc"
 	declare -gxr  __uipc_pubsub_root="$__uipc_root/pubsub"
 
 	declare -gxir __uipc_version=1
-
-	if ! mkdir -p "$__uipc_private" ||
-	   ! chgrp "$__uipc_group" "$__uipc_private"; then
-		log_error "Could not initialize private UIPC directory $__uipc_private"
-		return 1
-	fi
 
 	return 0
 }
@@ -259,7 +250,7 @@ uipc_endpoint_open() {
 		local self
 
 		self="${0##*/}"
-		name="priv/$USER/$self.$$.$(date +"%s").$RANDOM"
+		name="priv/$USER.$self.$$.$(date +"%s").$RANDOM"
 	fi
 
 	endpoint="$__uipc_root/$name"
