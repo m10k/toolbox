@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH="$PWD/..:$PATH"
+
 . toolbox.sh
 include "mutex"
 
