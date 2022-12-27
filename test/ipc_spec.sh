@@ -22,6 +22,8 @@ export PATH="$PWD/..:$PATH"
 include "ipc"
 
 setup() {
+	local keyfp
+
 	if ! mkdir -p "/tmp/test.$$"; then
 		return 1
 	fi
@@ -49,6 +51,14 @@ EOF
 	if ! gpg --batch --homedir "/tmp/test.$$" \
 	     --generate-key "/tmp/test.$$/batch.gpgscript" 2>/dev/null; then
 		return 1
+	fi
+
+	if ! keypf=$(gpg -K 2>/dev/null | grep -m 1 -oP '[0-9a-fA-F]{40}'); then
+		return 2
+	fi
+
+	if ! printf 'default-key %s\nquiet\n' "$keypf" > "/tmp/test.$$/gpg.conf"; then
+		return 3
 	fi
 
 	return 0
