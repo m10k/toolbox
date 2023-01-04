@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # inst.sh - Toolbox module for daemonized scripts
-# Copyright (C) 2021-2022 Matthias Kruk
+# Copyright (C) 2021-2023 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ __init() {
 		return 1
 	fi
 
-	if ! include "opt" "sem"; then
+	if ! include "log" "opt" "sem"; then
 		return 1
 	fi
 
