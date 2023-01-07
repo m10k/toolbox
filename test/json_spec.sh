@@ -339,8 +339,8 @@ Describe "json_array_tail()"
   End
 
   It "removes an object from the head of the array"
-    When call json_array_tail '[{}, {"hello": "world"}]'
-    The stdout should equal '[{"hello": "world"}]'
+    When call json_array_tail '[{}, {"hello":"world"}]'
+    The stdout should equal '[{"hello":"world"}]'
     The status should equal 0
   End
 End
@@ -352,7 +352,7 @@ Describe "json_array_to_lines()"
   End
 
   It "splits a string array to lines"
-    When call json_array_to_lines '["hello", "world"]'
+    When call json_array_to_lines '["hello","world"]'
     The first line of stdout should equal "hello"
     The second line of stdout should equal "world"
     The status should equal 0

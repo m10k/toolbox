@@ -261,12 +261,18 @@ json_array_tail() {
 	local tail
 	local element
 	local new
+	local string_re
 
+	string_re='^"(.*)"$'
 	tail=()
 
 	while read -r element; do
-		tail+=("$element")
-	done < <(jq -r '.[1:][]' <<< "$array")
+		if [[ "$element" =~ $string_re ]]; then
+			tail+=("${BASH_REMATCH[1]}")
+		else
+			tail+=("$element")
+		fi
+	done < <(jq -c '.[1:][]' <<< "$array")
 
 	if ! new=$(json_array "${tail[@]}"); then
 		return 1
