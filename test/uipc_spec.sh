@@ -173,7 +173,7 @@ Describe "Message"
 		    return 1
 	    fi
 
-	    if ! ../spec/validate.py ../spec/ipc_message.schema.json <(_uipc_decode "$msg"); then
+	    if ! spec/validate.py spec/ipc_message.schema.json <(_uipc_decode "$msg"); then
 		    return 1
 	    fi
 

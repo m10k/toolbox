@@ -285,7 +285,7 @@ Describe "Message"
 		    return 1
 	    fi
 
-	    if ! ../spec/validate.py ../spec/ipc_envelope.schema.json <(_ipc_decode "$msg"); then
+	    if ! spec/validate.py spec/ipc_envelope.schema.json <(_ipc_decode "$msg"); then
 		    return 1
 	    fi
 
@@ -304,7 +304,7 @@ Describe "Message"
 		    return 1
 	    fi
 
-	    if ! ../spec/validate.py ../spec/ipc_message.schema.json \
+	    if ! spec/validate.py spec/ipc_message.schema.json \
 		 <(_ipc_get "$msg" "message" | _ipc_decode); then
 		    return 1
 	    fi
