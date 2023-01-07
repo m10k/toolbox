@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # queue_spec.sh - Test cases for the toolbox queue module
-# Copyright (C) 2021 Matthias Kruk
+# Copyright (C) 2021-2023 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,8 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-export PATH="$PWD/..:$PATH"
 
 if ! . toolbox.sh; then
 	exit 1

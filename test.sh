@@ -85,7 +85,36 @@ main() {
 	return 0
 }
 
+whereami() {
+	local scriptpath
+
+	if ! scriptpath=$(realpath "${BASH_SOURCE[0]}"); then
+		return 1
+	fi
+
+	echo "${scriptpath%/*}"
+	return 0
+}
+
+use_this_toolbox() {
+	local here
+
+	if ! here=$(whereami); then
+		return 1
+	fi
+
+	if ! export PATH="$here:$PATH"; then
+		return 1
+	fi
+
+	return 0
+}
+
 {
+	if ! use_this_toolbox; then
+		exit 1
+	fi
+
 	if ! . toolbox.sh; then
 		exit 1
 	fi
