@@ -285,7 +285,7 @@ json_array_tail() {
 json_array_to_lines() {
 	local array="$1"
 
-        if ! jq -r '.[]' <<< "$array"; then
+        if ! jq -c -r '.[]' <<< "$array"; then
 		return 1
 	fi
 

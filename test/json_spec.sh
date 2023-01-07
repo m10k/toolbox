@@ -390,9 +390,9 @@ Describe "json_array_to_lines()"
   End
 
   It "splits an object array to lines"
-    When call json_array_to_lines '[{"data": 1}, {"data": 2}]'
-    The first line of stdout should equal '{"data": 1}'
-    The second line of stdout should equal '{"data": 2}'
+    When call json_array_to_lines '[{"data":1}, {"data":2}]'
+    The first line of stdout should equal '{"data":1}'
+    The second line of stdout should equal '{"data":2}'
     The status should equal 0
   End
 End
