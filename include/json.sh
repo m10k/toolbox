@@ -237,14 +237,21 @@ json_array_head() {
 	local array="$1"
 
 	local head
+	local string_re
 
-	head=$(jq -e -r '.[0]' <<< "$array")
+	string_re='^"(.*)"$'
 
-	if (( $? > 1 )); then
+	if ! head=$(jq '.[0]' <<< "$array") ||
+	   [[ "$head" == "null" ]]; then
 		return 1
 	fi
 
-	echo "$head"
+	if [[ "$head" =~ $string_re ]]; then
+		echo "${BASH_REMATCH[1]}"
+	else
+		echo "$head"
+	fi
+
 	return 0
 }
 
