@@ -27,6 +27,32 @@ cleanup() {
 	return 0
 }
 
+Describe "ipc_get_root()"
+  It "returns /var/lib/toolbox/uipc"
+    When call ipc_get_root
+    The stdout should equal "/var/lib/toolbox/uipc"
+  End
+
+  It "returns the same value as uipc_get_root()"
+    _test_ipc_uipc_get_root_equal() {
+	    local uipc_root
+	    local ipc_root
+
+	    uipc_root=$(uipc_get_root)
+	    ipc_root=$(ipc_get_root)
+
+	    if [[ "$uipc_root" != "$ipc_root" ]]; then
+		    return 1
+	    fi
+
+	    return 0
+    }
+
+    When call _test_ipc_uipc_get_root_equal
+    The status should equal 0
+  End
+End
+
 Describe "Encoding"
   It "ipc_encode() outputs base64"
     _test_encoding() {
@@ -125,11 +151,11 @@ Describe "Message"
   BeforeAll 'setup'
   AfterAll 'cleanup'
 
-  It "_uipc_msg_new() outputs base64 encoded data"
-    _test_uipc_msg_new_is_base64() {
+  It "ipc_msg_new() outputs base64 encoded data"
+    _test_ipc_msg_new_is_base64() {
 	    local msg
 
-	    if ! msg=$(_uipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -140,15 +166,15 @@ Describe "Message"
 	    return 0
     }
 
-    When call _test_uipc_msg_new_is_base64
+    When call _test_ipc_msg_new_is_base64
     The status should equal 0
   End
 
-  It "_uipc_msg_new() outputs an encoded JSON object"
-    _test_uipc_msg_new_is_json() {
+  It "_ipc_msg_new() outputs an encoded JSON object"
+    _test_ipc_msg_new_is_json() {
 	    local msg
 
-	    if ! msg=$(_uipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -159,17 +185,17 @@ Describe "Message"
 	    return 0
     }
 
-    When call _test_uipc_msg_new_is_json
+    When call _test_ipc_msg_new_is_json
     The status should equal 0
     The stdout should match pattern '{*}'
     The stderr should not start with "parse error"
   End
 
-  It "_uipc_msg_new() generates valid toolbox.ipc.message objects"
-    _test_uipc_msg_new_json_schema_envelope() {
+  It "ipc_msg_new() generates valid toolbox.ipc.message objects"
+    _test_ipc_msg_new_json_schema_envelope() {
 	    local msg
 
-	    if ! msg=$(_uipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -180,53 +206,53 @@ Describe "Message"
 	    return 0
     }
 
-    When call _test_uipc_msg_new_json_schema_envelope
+    When call _test_ipc_msg_new_json_schema_envelope
     The status should equal 0
   End
 
-  It "_uipc_msg_new()/uipc_msg_get_version() sets/gets the correct version"
-    _test_uipc_msg_new_version() {
+  It "ipc_msg_new()/ipc_msg_get_version() sets/gets the correct version"
+    _test_ipc_msg_new_version() {
 	    local msg
 
-	    if ! msg=$(_uipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
-	    uipc_msg_get_version "$msg"
+	    ipc_msg_get_version "$msg"
     }
 
-    When call _test_uipc_msg_new_version
+    When call _test_ipc_msg_new_version
     The status should equal 0
     The stdout should equal "$__uipc_version"
   End
 
-  It "_uipc_msg_new()/uipc_msg_get_user() sets/gets the correct user"
+  It "ipc_msg_new()/ipc_msg_get_user() sets/gets the correct user"
 
-    _test_uipc_msg_new_user() {
+    _test_ipc_msg_new_user() {
 	    local msg
 
-	    msg=$(_uipc_msg_new "from" "to" "data")
+	    msg=$(ipc_msg_new "from" "to" "data")
 
-	    uipc_msg_get_user "$msg"
+	    ipc_msg_get_user "$msg"
     }
 
-    When call _test_uipc_msg_new_user
+    When call _test_ipc_msg_new_user
     The status should equal 0
     The stdout should equal "$USER"
   End
 
-  It "_uipc_msg_new()/uipc_msg_get_timestamp() sets/gets the correct timestamp"
-    _test_uipc_msg_new_timestamp() {
+  It "ipc_msg_new()/ipc_msg_get_timestamp() sets/gets the correct timestamp"
+    _test_ipc_msg_new_timestamp() {
 	    local before
 	    local after
 	    local msg
 	    local timestamp
 
 	    before=$(date +"%s")
-	    msg=$(_uipc_msg_new "from" "to" "data")
+	    msg=$(ipc_msg_new "from" "to" "data")
 	    after=$(date +"%s")
 
-	    timestamp=$(uipc_msg_get_timestamp "$msg")
+	    timestamp=$(ipc_msg_get_timestamp "$msg")
 
 	    if (( timestamp < before )) ||
 	       (( timestamp > after )); then
@@ -236,62 +262,62 @@ Describe "Message"
 	    return 0
     }
 
-    When call _test_uipc_msg_new_timestamp
+    When call _test_ipc_msg_new_timestamp
     The status should equal 0
   End
 
-  It "_uipc_msg_new()/uipc_msg_get_source() sets/gets the correct source"
-    _test_uipc_msg_new_source() {
+  It "ipc_msg_new()/ipc_msg_get_source() sets/gets the correct source"
+    _test_ipc_msg_new_source() {
 	    local msg
 
-	    if ! msg=$(_uipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
-	    uipc_msg_get_source "$msg"
+	    ipc_msg_get_source "$msg"
     }
 
-    When call _test_uipc_msg_new_source
+    When call _test_ipc_msg_new_source
     The status should equal 0
     The stdout should equal "from"
   End
 
-  It "_uipc_msg_new()/uipc_msg_get_destination() sets/gets the correct destination"
-    _test_uipc_msg_new_destination() {
+  It "ipc_msg_new()/ipc_msg_get_destination() sets/gets the correct destination"
+    _test_ipc_msg_new_destination() {
 	    local msg
 
-	    if ! msg=$(_uipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
-	    uipc_msg_get_destination "$msg"
+	    ipc_msg_get_destination "$msg"
     }
 
-    When call _test_uipc_msg_new_destination
+    When call _test_ipc_msg_new_destination
     The status should equal 0
     The stdout should equal "to"
   End
 
-  It "_uipc_msg_new()/uipc_msg_get_data() sets/gets the correct data"
-    _test_uipc_msg_new_data() {
+  It "ipc_msg_new()/ipc_msg_get_data() sets/gets the correct data"
+    _test_ipc_msg_new_data() {
 	    local msg
 
-	    if ! msg=$(_uipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
-	    uipc_msg_get_data "$msg"
+	    ipc_msg_get_data "$msg"
     }
 
-    When call _test_uipc_msg_new_data
+    When call _test_ipc_msg_new_data
     The status should equal 0
     The stdout should equal "data"
   End
 End
 
-Describe "uipc_endpoint_open"
+Describe "ipc_endpoint_open"
   It "opens a public endpoint when the endpoint name is specified"
-    _test_uipc_endpoint_open_public() {
+    _test_ipc_endpoint_open_public() {
 	    local endpoint_name
 	    local endpoint
 	    local res
@@ -299,143 +325,143 @@ Describe "uipc_endpoint_open"
 	    endpoint_name="pub/test$RANDOM"
 	    res=1
 
-	    if endpoint=$(uipc_endpoint_open "$endpoint_name"); then
+	    if endpoint=$(ipc_endpoint_open "$endpoint_name"); then
 		    if [[ "$endpoint" != "priv/"* ]]; then
 			    res=0
 		    fi
 
-		    uipc_endpoint_close "$endpoint"
+		    ipc_endpoint_close "$endpoint"
 	    fi
 
 	    return "$res"
     }
 
-    When call _test_uipc_endpoint_open_public
+    When call _test_ipc_endpoint_open_public
     The status should equal 0
   End
 
   It "opens a private endpoint when no endpoint name is specified"
-    _test_uipc_endpoint_open_private() {
+    _test_ipc_endpoint_open_private() {
 	    local endpoint
 	    local res
 
 	    res=1
 
-	    if endpoint=$(uipc_endpoint_open); then
+	    if endpoint=$(ipc_endpoint_open); then
 		    if [[ "$endpoint" == "priv/"* ]]; then
 			    res=0
 		    fi
 
-		    uipc_endpoint_close "$endpoint"
+		    ipc_endpoint_close "$endpoint"
 	    fi
 
 	    return "$res"
     }
 
-    When call _test_uipc_endpoint_open_private
+    When call _test_ipc_endpoint_open_private
     The status should equal 0
   End
 End
 
-Describe "uipc_endpoint_close"
+Describe "ipc_endpoint_close"
   It "closes a public endpoint"
-    _test_uipc_endpoint_close_public() {
+    _test_ipc_endpoint_close_public() {
 	    local endpoint
 
-	    if ! endpoint=$(uipc_endpoint_open "pub/test$RANDOM"); then
+	    if ! endpoint=$(ipc_endpoint_open "pub/test$RANDOM"); then
 		    return 1
 	    fi
 
-	    if ! uipc_endpoint_close "$endpoint"; then
+	    if ! ipc_endpoint_close "$endpoint"; then
 		    return 1
 	    fi
 
 	    return 0
     }
 
-    When call _test_uipc_endpoint_close_public
+    When call _test_ipc_endpoint_close_public
     The status should equal 0
   End
 
   It "closes a private endpoint"
-    _test_uipc_endpoint_close_private() {
+    _test_ipc_endpoint_close_private() {
 	    local endpoint
 
-	    if ! endpoint=$(uipc_endpoint_open); then
+	    if ! endpoint=$(ipc_endpoint_open); then
 		    return 1
 	    fi
 
-	    if ! uipc_endpoint_close "$endpoint"; then
+	    if ! ipc_endpoint_close "$endpoint"; then
 		    return 1
 	    fi
 
 	    return 0
     }
 
-    When call _test_uipc_endpoint_close_private
+    When call _test_ipc_endpoint_close_private
     The status should equal 0
   End
 End
 
-Describe "uipc_endpoint_send"
+Describe "ipc_endpoint_send"
   BeforeAll 'setup'
   AfterAll 'cleanup'
 
   It "sends a message to a public endpoint"
-    _test_uipc_endpoint_send_public() {
+    _test_ipc_endpoint_send_public() {
 	    local endpoint
 	    local res
 
-	    if ! endpoint=$(uipc_endpoint_open "pub/test$RANDOM"); then
+	    if ! endpoint=$(ipc_endpoint_open "pub/test$RANDOM"); then
 		    return 1
 	    fi
 
-	    if uipc_endpoint_send "-" "$endpoint" "data"; then
+	    if ipc_endpoint_send "-" "$endpoint" "data"; then
 		    res=0
 	    else
 		    res=1
 	    fi
 
-	    uipc_endpoint_close "$endpoint"
+	    ipc_endpoint_close "$endpoint"
 
 	    return "$res"
     }
 
-    When call _test_uipc_endpoint_send_public
+    When call _test_ipc_endpoint_send_public
     The status should equal 0
   End
 
   It "sends a message to a private endpoint"
-    _test_uipc_endpoint_send_private() {
+    _test_ipc_endpoint_send_private() {
 	    local endpoint
 	    local res
 
-	    if ! endpoint=$(uipc_endpoint_open); then
+	    if ! endpoint=$(ipc_endpoint_open); then
 		    return 1
 	    fi
 
-	    if uipc_endpoint_send "-" "$endpoint" "data"; then
+	    if ipc_endpoint_send "-" "$endpoint" "data"; then
 		    res=0
 	    else
 		    res=1
 	    fi
 
-	    uipc_endpoint_close "$endpoint"
+	    ipc_endpoint_close "$endpoint"
 
 	    return "$res"
     }
 
-    When call _test_uipc_endpoint_send_private
+    When call _test_ipc_endpoint_send_private
     The status should equal 0
   End
 End
 
-Describe "uipc_endpoint_recv"
+Describe "ipc_endpoint_recv"
   BeforeAll 'setup'
   AfterAll 'cleanup'
 
   It "receives messages on a public endpoint"
-    _test_uipc_endpoint_recv_public() {
+    _test_ipc_endpoint_recv_public() {
 	    local endpoint
 	    local res
 	    local txdata
@@ -445,14 +471,14 @@ Describe "uipc_endpoint_recv"
 	    txdata="data$RANDOM"
 	    res=1
 
-	    if endpoint=$(uipc_endpoint_open "pub/test$RANDOM"); then
-		    if ! uipc_endpoint_send "-" "$endpoint" "$txdata"; then
+	    if endpoint=$(ipc_endpoint_open "pub/test$RANDOM"); then
+		    if ! ipc_endpoint_send "-" "$endpoint" "$txdata"; then
 			    res=2
 
-		    elif ! msg=$(uipc_endpoint_recv "$endpoint" 10); then
+		    elif ! msg=$(ipc_endpoint_recv "$endpoint" 10); then
 			    res=3
 
-		    elif ! rxdata=$(uipc_msg_get_data "$msg"); then
+		    elif ! rxdata=$(ipc_msg_get_data "$msg"); then
 			    res=4
 
 		    elif [[ "$rxdata" != "$txdata" ]]; then
@@ -462,18 +488,18 @@ Describe "uipc_endpoint_recv"
 			    res=0
 		    fi
 
-		    uipc_endpoint_close "$endpoint"
+		    ipc_endpoint_close "$endpoint"
 	    fi
 
 	    return "$res"
     }
 
-    When call _test_uipc_endpoint_recv_public
+    When call _test_ipc_endpoint_recv_public
     The status should equal 0
   End
 
   It "receives messages on a private endpoint"
-    _test_uipc_endpoint_recv_private() {
+    _test_ipc_endpoint_recv_private() {
 	    local endpoint
 	    local res
 	    local txdata
@@ -483,14 +509,14 @@ Describe "uipc_endpoint_recv"
 	    res=1
 	    txdata="data$RANDOM"
 
-	    if endpoint=$(uipc_endpoint_open); then
-		    if ! uipc_endpoint_send "-" "$endpoint" "$txdata"; then
+	    if endpoint=$(ipc_endpoint_open); then
+		    if ! ipc_endpoint_send "-" "$endpoint" "$txdata"; then
 			    res=2
 
-		    elif ! msg=$(uipc_endpoint_recv "$endpoint"); then
+		    elif ! msg=$(ipc_endpoint_recv "$endpoint"); then
 			    res=3
 
-		    elif ! rxdata=$(uipc_msg_get_data "$msg"); then
+		    elif ! rxdata=$(ipc_msg_get_data "$msg"); then
 			    res=4
 
 		    elif [[ "$rxdata" != "$txdata" ]]; then
@@ -500,13 +526,13 @@ Describe "uipc_endpoint_recv"
 			    res=0
 		    fi
 
-		    uipc_endpoint_close "$endpoint"
+		    ipc_endpoint_close "$endpoint"
 	    fi
 
 	    return "$res"
     }
 
-    When call _test_uipc_endpoint_recv_private
+    When call _test_ipc_endpoint_recv_private
     The status should equal 0
   End
 End
