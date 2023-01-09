@@ -182,6 +182,40 @@ method_not_implemented() {
 	return 127
 }
 
+have_method() {
+	local name="$1"
+
+	if ! declare -f "$name" &> /dev/null; then
+		return 1
+	fi
+
+	return 0
+}
+
+rename_method() {
+	local old_name="$1"
+	local new_name="$2"
+
+	local old_definition
+	local new_definition
+
+	if ! old_definition=$(declare -f "$old_name"); then
+		return 1
+	fi
+
+	new_definition="$new_name${old_definition#* }"
+
+	if ! unset -f "$old_name"; then
+		return 1
+	fi
+
+	if ! source <(echo "$new_definition");  then
+		return 1
+	fi
+
+	return 0
+}
+
 interface() {
 	local methods=("$@")
 
@@ -211,6 +245,21 @@ interface() {
 		# shellcheck disable=SC2016 # Reason: Don't want expansion in the format string
 		call_stubs+=$(printf '\n%s() {\n\t"${%s["%s"]}" "$@"\n\treturn "$?"\n}' \
 				     "${name}_$method" "$vtable_name" "$method")
+		interface["$method"]=method_not_implemented
+	done
+
+	# Rename existing functions if they clash with the call stubs
+	for method in "${methods[@]}"; do
+		if ! have_method "${name}_$method"; then
+			continue
+		fi
+
+		if ! rename_method "${name}_$method" "___${name}_$method"; then
+			echo "ERROR: Could not rename function ${name}_$method. Is it readonly?" 1>&2
+			return 1
+		fi
+
+		interface["$method"]="___${name}_$method"
 	done
 
 	# shellcheck disable=SC1090 # Reason: Dynamically generated call-stubs can't be checked
@@ -218,11 +267,6 @@ interface() {
 		echo "ERROR: Could not generate call stubs for interface $name" 1>&2
 		return 1
 	fi
-
-	# Set the entries in the vtable
-	for method in "${methods[@]}"; do
-		interface["$method"]=method_not_implemented
-	done
 
 	return 0
 }
