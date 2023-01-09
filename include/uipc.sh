@@ -26,29 +26,10 @@ __init() {
 
 	declare -gxir __uipc_version=1
 
+	implements "ipc"
+
 	return 0
 }
-
-_uipc_encode() {
-	local decoded="$1"
-
-	if (( $# > 0 )); then
-		base64 -w 0 <<< "$decoded"
-	else
-		base64 -w 0 < /dev/stdin
-	fi
-}
-
-_uipc_decode() {
-	local encoded="$1"
-
-	if (( $# > 0 )); then
-		base64 -d <<< "$encoded"
-	else
-		base64 -d < /dev/stdin
-	fi
-}
-
 
 _uipc_msg_get() {
 	local msg="$1"
@@ -56,7 +37,7 @@ _uipc_msg_get() {
 
 	local value
 
-	if ! value=$(_uipc_decode "$msg" | jq -e -r ".$field" 2>/dev/null); then
+	if ! value=$(ipc_decode "$msg" | jq -e -r ".$field" 2>/dev/null); then
 		return 1
 	fi
 
@@ -98,7 +79,7 @@ uipc_msg_dump() {
 	cat <<EOF | log_highlight "uipc message"
 Message version: $version [supported: $version_ok]
 
-$(_uipc_decode <<< "$msg" | jq .)
+$(ipc_decode <<< "$msg" | jq .)
 EOF
 
 	return 0
@@ -119,7 +100,7 @@ _uipc_msg_new() {
 	local message
 	local encoded_message
 
-	if ! encoded_data=$(_uipc_encode <<< "$data"); then
+	if ! encoded_data=$(ipc_encode <<< "$data"); then
 		log_error "Could not encode data"
 
 	elif ! timestamp=$(date +"%s"); then
@@ -134,7 +115,7 @@ _uipc_msg_new() {
 				     "data"        "$encoded_data"); then
 		log_error "Could not make message"
 
-	elif ! encoded_message=$(_uipc_encode "$message"); then
+	elif ! encoded_message=$(ipc_encode "$message"); then
 		log_error "Could not encode message"
 
 	else
@@ -220,7 +201,7 @@ uipc_msg_get_data() {
 		return 1
 	fi
 
-	if ! data_raw=$(_uipc_decode <<< "$data"); then
+	if ! data_raw=$(ipc_decode <<< "$data"); then
 		return 1
 	fi
 
