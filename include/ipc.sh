@@ -26,10 +26,12 @@ __init() {
 
 	declare -gxir __ipc_version=1
 
+	interface "encode"                   \
+	          "decode"
 	return 0
 }
 
-_ipc_encode() {
+ipc_encode() {
 	local decoded="$1"
 
 	if (( $# > 0 )); then
@@ -39,7 +41,7 @@ _ipc_encode() {
 	fi
 }
 
-_ipc_decode() {
+ipc_decode() {
 	local encoded="$1"
 
 	if (( $# > 0 )); then
@@ -55,7 +57,7 @@ _ipc_sign() {
 	local signature
 
 	if ! signature=$(gpg --output - --detach-sig <(echo "$data") |
-                                 _ipc_encode); then
+                                 ipc_encode); then
 		return 1
 	fi
 
@@ -72,7 +74,7 @@ _ipc_verify() {
 
 	err=0
 
-	if ! result=$(gpg --verify <(_ipc_decode <<< "$signature") <(echo "$data") 2>&1); then
+	if ! result=$(gpg --verify <(ipc_decode <<< "$signature") <(echo "$data") 2>&1); then
 		err=1
 	fi
 
@@ -87,7 +89,7 @@ _ipc_get() {
 
 	local value
 
-	if ! value=$(_ipc_decode "$msg" | jq -e -r ".$field" 2>/dev/null); then
+	if ! value=$(ipc_decode "$msg" | jq -e -r ".$field" 2>/dev/null); then
 		return 1
 	fi
 
@@ -260,7 +262,7 @@ Signature valid: $signature_ok
 Signer         : $signer_name <$signer_email>
 Key fingerprint: $signer_key
 
-$(_ipc_decode <<< "$msg" | jq .)
+$(ipc_decode <<< "$msg" | jq .)
 EOF
 
 	return 0
@@ -284,7 +286,7 @@ _ipc_msg_new() {
 	local envelope
 	local encoded_envelope
 
-	if ! encoded_data=$(_ipc_encode <<< "$data"); then
+	if ! encoded_data=$(ipc_encode <<< "$data"); then
 		log_error "Could not encode data"
 
 	elif ! timestamp=$(date +"%s"); then
@@ -299,7 +301,7 @@ _ipc_msg_new() {
 				     "data"        "$encoded_data"); then
 		log_error "Could not make message"
 
-	elif ! encoded_message=$(_ipc_encode "$message"); then
+	elif ! encoded_message=$(ipc_encode "$message"); then
 		log_error "Could not encode message"
 
 	elif ! signature=$(_ipc_sign "$encoded_message"); then
@@ -309,7 +311,7 @@ _ipc_msg_new() {
 				      "signature" "$signature"); then
 		log_error "Could not make envelope"
 
-	elif ! encoded_envelope=$(_ipc_encode "$envelope"); then
+	elif ! encoded_envelope=$(ipc_encode "$envelope"); then
 		log_error "Could not encode envelope"
 
 	else
@@ -395,7 +397,7 @@ ipc_msg_get_data() {
 		return 1
 	fi
 
-	if ! data_raw=$(_ipc_decode <<< "$data"); then
+	if ! data_raw=$(ipc_decode <<< "$data"); then
 		return 1
 	fi
 
