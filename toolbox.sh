@@ -290,16 +290,10 @@ implements() {
 	interface="${__TOOLBOX_INTERFACES[$iface]}"
 	module=$(calling_module)
 
-	# Check if all methods are implemented before modifying the vtable
 	for method in "${!interface[@]}"; do
-		if ! declare -f "${module}_$method" &>/dev/null; then
-			echo "ERROR: Module $module does not implement the method \"$method\"" 1>&2
-			return 1
+		if have_method "${module}_$method"; then
+			interface["$method"]="${module}_$method"
 		fi
-	done
-
-	for method in "${!interface[@]}"; do
-		interface["$method"]="${module}_$method"
 	done
 
 	return 0
