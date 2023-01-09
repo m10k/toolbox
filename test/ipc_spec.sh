@@ -66,6 +66,13 @@ cleanup() {
 	rm -rf "/tmp/test.$$"
 }
 
+Describe "ipc_get_root()"
+  It "returns /var/lib/toolbox/ipc"
+    When call ipc_get_root
+    The stdout should equal "/var/lib/toolbox/ipc"
+  End
+End
+
 Describe "Encoding"
   It "ipc_encode() outputs base64"
     _test_encoding() {
@@ -237,11 +244,11 @@ Describe "Message"
   BeforeAll 'setup'
   AfterAll 'cleanup'
 
-  It "_ipc_msg_new() outputs base64 encoded data"
+  It "ipc_msg_new() outputs base64 encoded data"
     _test_ipc_msg_new_is_base64() {
 	    local msg
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -256,11 +263,11 @@ Describe "Message"
     The status should equal 0
   End
 
-  It "_ipc_msg_new() outputs an encoded JSON object"
+  It "ipc_msg_new() outputs an encoded JSON object"
     _test_ipc_msg_new_is_json() {
 	    local msg
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -277,11 +284,11 @@ Describe "Message"
     The stderr should not start with "parse error"
   End
 
-  It "_ipc_msg_new() generates valid toolbox.ipc.envelope objects"
+  It "ipc_msg_new() generates valid toolbox.ipc.envelope objects"
     _test_ipc_msg_new_json_schema_envelope() {
 	    local msg
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -296,11 +303,11 @@ Describe "Message"
     The status should equal 0
   End
 
-  It "_ipc_msg_new() messages contain valid toolbox.ipc.message objects"
+  It "ipc_msg_new() messages contain valid toolbox.ipc.message objects"
     _test_ipc_msg_new_json_schema_message() {
 	    local msg
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -316,11 +323,11 @@ Describe "Message"
     The status should equal 0
   End
 
-  It "_ipc_msg_new()/ipc_msg_get_version() sets/gets the correct version"
+  It "ipc_msg_new()/ipc_msg_get_version() sets/gets the correct version"
     _test_ipc_msg_new_version() {
 	    local msg
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -332,12 +339,12 @@ Describe "Message"
     The stdout should equal "$__ipc_version"
   End
 
-  It "_ipc_msg_new()/ipc_msg_get_user() sets/gets the correct user"
+  It "ipc_msg_new()/ipc_msg_get_user() sets/gets the correct user"
 
     _test_ipc_msg_new_user() {
 	    local msg
 
-	    msg=$(_ipc_msg_new "from" "to" "data")
+	    msg=$(ipc_msg_new "from" "to" "data")
 
 	    ipc_msg_get_user "$msg"
     }
@@ -347,7 +354,7 @@ Describe "Message"
     The stdout should equal "$USER"
   End
 
-  It "_ipc_msg_new()/ipc_msg_get_timestamp() sets/gets the correct timestamp"
+  It "ipc_msg_new()/ipc_msg_get_timestamp() sets/gets the correct timestamp"
     _test_ipc_msg_new_timestamp() {
 	    local before
 	    local after
@@ -355,7 +362,7 @@ Describe "Message"
 	    local timestamp
 
 	    before=$(date +"%s")
-	    msg=$(_ipc_msg_new "from" "to" "data")
+	    msg=$(ipc_msg_new "from" "to" "data")
 	    after=$(date +"%s")
 
 	    timestamp=$(ipc_msg_get_timestamp "$msg")
@@ -375,11 +382,11 @@ Describe "Message"
     The status should equal 0
   End
 
-  It "_ipc_msg_new()/ipc_msg_get_source() sets/gets the correct source"
+  It "ipc_msg_new()/ipc_msg_get_source() sets/gets the correct source"
     _test_ipc_msg_new_source() {
 	    local msg
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -391,11 +398,11 @@ Describe "Message"
     The stdout should equal "from"
   End
 
-  It "_ipc_msg_new()/ipc_msg_get_destination() sets/gets the correct destination"
+  It "ipc_msg_new()/ipc_msg_get_destination() sets/gets the correct destination"
     _test_ipc_msg_new_destination() {
 	    local msg
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -407,11 +414,11 @@ Describe "Message"
     The stdout should equal "to"
   End
 
-  It "_ipc_msg_new()/ipc_msg_get_data() sets/gets the correct data"
+  It "ipc_msg_new()/ipc_msg_get_data() sets/gets the correct data"
     _test_ipc_msg_new_data() {
 	    local msg
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -427,7 +434,7 @@ Describe "Message"
     _test_ipc_msg_get_signer_name() {
 	    local msg
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -443,7 +450,7 @@ Describe "Message"
     _test_ipc_msg_get_signer_email() {
 	    local msg
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 
@@ -460,7 +467,7 @@ Describe "Message"
 	    local msg
 	    local key
 
-	    if ! msg=$(_ipc_msg_new "from" "to" "data"); then
+	    if ! msg=$(ipc_msg_new "from" "to" "data"); then
 		    return 1
 	    fi
 

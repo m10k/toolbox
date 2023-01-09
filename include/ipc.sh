@@ -22,13 +22,34 @@ __init() {
 	fi
 
 	declare -gxr  __ipc_root="/var/lib/toolbox/ipc"
-	declare -gxr  __ipc_pubsub_root="$__ipc_root/pubsub"
-
 	declare -gxir __ipc_version=1
 
-	interface "encode"                   \
-	          "decode"
+	interface "get_root"                 \
+	          "msg_new"                  \
+	          "msg_get"                  \
+	          "msg_dump"                 \
+	          "msg_get_version"          \
+	          "msg_get_source"           \
+	          "msg_get_destination"      \
+	          "msg_get_user"             \
+	          "msg_get_timestamp"        \
+	          "msg_get_data"             \
+	          "msg_get_topic"            \
+	          "encode"                   \
+	          "decode"                   \
+	          "endpoint_open"            \
+	          "endpoint_close"           \
+	          "endpoint_send"            \
+	          "endpoint_recv"            \
+	          "endpoint_subscribe"       \
+	          "endpoint_publish"         \
+	          "endpoint_foreach_message" \
+
 	return 0
+}
+
+ipc_get_root() {
+	echo "$__ipc_root"
 }
 
 ipc_encode() {
@@ -97,7 +118,7 @@ _ipc_get() {
 	return 0
 }
 
-_ipc_msg_get() {
+ipc_msg_get() {
 	local envelope="$1"
 	local field="$2"
 
@@ -240,7 +261,7 @@ ipc_msg_dump() {
 	local signature_ok
 
 	msg=$(_ipc_get "$envelope" "message")
-	version=$(_ipc_msg_get "$envelope" "version")
+	version=$(ipc_msg_get "$envelope" "version")
 	signer_name=$(ipc_msg_get_signer_name "$envelope")
 	signer_email=$(ipc_msg_get_signer_email "$envelope")
 	signer_key=$(ipc_msg_get_signer_key "$envelope")
@@ -268,7 +289,7 @@ EOF
 	return 0
 }
 
-_ipc_msg_new() {
+ipc_msg_new() {
 	local source="$1"
 	local destination="$2"
 	local data="$3"
@@ -327,7 +348,7 @@ ipc_msg_get_version() {
 
 	local version
 
-	if ! version=$(_ipc_msg_get "$msg" "version"); then
+	if ! version=$(ipc_msg_get "$msg" "version"); then
 		return 1
 	fi
 
@@ -340,7 +361,7 @@ ipc_msg_get_source() {
 
 	local src
 
-	if ! src=$(_ipc_msg_get "$msg" "source"); then
+	if ! src=$(ipc_msg_get "$msg" "source"); then
 		return 1
 	fi
 
@@ -353,7 +374,7 @@ ipc_msg_get_destination() {
 
 	local dst
 
-	if ! dst=$(_ipc_msg_get "$msg" "destination"); then
+	if ! dst=$(ipc_msg_get "$msg" "destination"); then
 		return 1
 	fi
 
@@ -366,7 +387,7 @@ ipc_msg_get_user() {
 
 	local user
 
-	if ! user=$(_ipc_msg_get "$msg" "user"); then
+	if ! user=$(ipc_msg_get "$msg" "user"); then
 		return 1
 	fi
 
@@ -379,7 +400,7 @@ ipc_msg_get_timestamp() {
 
 	local timestamp
 
-	if ! timestamp=$(_ipc_msg_get "$msg" "timestamp"); then
+	if ! timestamp=$(ipc_msg_get "$msg" "timestamp"); then
 		return 1
 	fi
 
@@ -393,7 +414,7 @@ ipc_msg_get_data() {
 	local data
 	local data_raw
 
-	if ! data=$(_ipc_msg_get "$msg" "data"); then
+	if ! data=$(ipc_msg_get "$msg" "data"); then
 		return 1
 	fi
 
@@ -410,7 +431,7 @@ ipc_msg_get_topic() {
 
 	local topic
 
-	if ! topic=$(_ipc_msg_get "$msg" "topic"); then
+	if ! topic=$(ipc_msg_get "$msg" "topic"); then
 		return 1
 	fi
 
@@ -490,7 +511,7 @@ ipc_endpoint_open() {
 		name="priv/$USER.$self.$$.$(date +"%s").$RANDOM"
 	fi
 
-	endpoint="$__ipc_root/$name"
+	endpoint="$(ipc_get_root)/$name"
 
 	if ! [ -d "$endpoint" ]; then
 		if ! mkdir -p "$endpoint/subscriptions"; then
@@ -518,7 +539,7 @@ ipc_endpoint_close() {
 	local endpoint
 	local subscription
 
-	endpoint="$__ipc_root/$name"
+	endpoint="$(ipc_get_root)/$name"
 
 	if ! queue_destroy "$endpoint/queue"; then
 		return 1
@@ -543,7 +564,7 @@ _ipc_endpoint_put() {
 
 	local queue
 
-	queue="$__ipc_root/$endpoint/queue"
+	queue="$(ipc_get_root)/$endpoint/queue"
 
 	if ! queue_put "$queue" "$msg"; then
 		return 1
@@ -560,7 +581,7 @@ ipc_endpoint_send() {
 
 	local msg
 
-	if ! msg=$(_ipc_msg_new "$source" "$destination" "$data" "$topic"); then
+	if ! msg=$(ipc_msg_new "$source" "$destination" "$data" "$topic"); then
 		return 1
 	fi
 
@@ -578,7 +599,7 @@ ipc_endpoint_recv() {
 	local queue
 	local msg
 
-	queue="$__ipc_root/$endpoint/queue"
+	queue="$(ipc_get_root)/$endpoint/queue"
 
 	if ! msg=$(queue_get "$queue" "$timeout"); then
 		return 1
@@ -591,7 +612,7 @@ ipc_endpoint_recv() {
 _ipc_endpoint_topic_create() {
 	local topic="$1"
 
-	if ! mkdir -p "$__ipc_pubsub_root/$topic"; then
+	if ! mkdir -p "$(ipc_get_root)/pubsub/$topic"; then
 		return 1
 	fi
 
@@ -605,14 +626,14 @@ _ipc_endpoint_topic_subscribe() {
 	local topicdir
 	local subscription
 
-	topicdir="$__ipc_pubsub_root/$topic"
+	topicdir="$(ipc_get_root)/pubsub/$topic"
 	subscription="$topicdir/${endpoint//\//_}"
 
 	if ! ln -sf "$endpoint" "$subscription"; then
 		return 1
 	fi
 
-	if ! ln -sfn "$topicdir" "$__ipc_root/$endpoint/subscriptions/$topic"; then
+	if ! ln -sfn "$topicdir" "$(ipc_get_root)/$endpoint/subscriptions/$topic"; then
 		rm -f "$subscription"
 		return 1
 	fi
@@ -633,7 +654,7 @@ _ipc_endpoint_topic_get_subscribers() {
 		fi
 
 		echo "$subscriber"
-	done < <(find "$__ipc_pubsub_root/$topic" -mindepth 1 -maxdepth 1 -type l)
+	done < <(find "$(ipc_get_root)/pubsub/$topic" -mindepth 1 -maxdepth 1 -type l)
 
 	return 0
 }
@@ -688,7 +709,7 @@ ipc_endpoint_foreach_message() {
 
 	local queue
 
-	queue="$__ipc_root/$endpoint/queue"
+	queue="$(ipc_get_root)/$endpoint/queue"
 
 	if ! queue_foreach "$queue" _ipc_endpoint_foreach_message_helper \
 	                   "$endpoint" "$func" "${args[@]}"; then
