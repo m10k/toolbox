@@ -1,5 +1,16 @@
 #!/bin/sh
 
+path_set_user_group_mode() {
+	path="$1"
+	user="$2"
+	group="$3"
+	mode="$4"
+
+	if ! dpkg-statoverride --list "$path" >/dev/null 2>&1; then
+		dpkg-statoverride --update --add "$user" "$group" "$mode" "$path"
+	fi
+}
+
 main() {
 	action="$1"
 
@@ -13,19 +24,18 @@ main() {
 	# so we don't change it.
 
 	if addgroup toolbox; then
-		if ! dpkg-statoverride --list /var/lib/toolbox >/dev/null 2>&1; then
-			dpkg-statoverride --update --add root toolbox 0770 /var/lib/toolbox
-		fi
+		path_set_user_group_mode "/var/lib/toolbox"             "root" "toolbox"     "0770"
 	fi
 
 	if addgroup toolbox_ipc; then
-		if ! dpkg-statoverride --list /var/lib/toolbox/ipc >/dev/null 2>&1; then
-			dpkg-statoverride --update --add root toolbox_ipc 2770 /var/lib/toolbox/ipc
-		fi
-
-		if ! dpkg-statoverride --list /var/lib/toolbox/uipc >/dev/null 2>&1; then
-			dpkg-statoverride --update --add root toolbox_ipc 2770 /var/lib/toolbox/uipc
-		fi
+		path_set_user_group_mode "/var/lib/toolbox/ipc"         "root" "toolbox_ipc" "2770"
+		path_set_user_group_mode "/var/lib/toolbox/ipc/pub"     "root" "toolbox_ipc" "2770"
+		path_set_user_group_mode "/var/lib/toolbox/ipc/priv"    "root" "toolbox_ipc" "2770"
+		path_set_user_group_mode "/var/lib/toolbox/ipc/pubsub"  "root" "toolbox_ipc" "2770"
+		path_set_user_group_mode "/var/lib/toolbox/uipc"        "root" "toolbox_ipc" "2770"
+		path_set_user_group_mode "/var/lib/toolbox/uipc/pub"    "root" "toolbox_ipc" "2770"
+		path_set_user_group_mode "/var/lib/toolbox/uipc/priv"   "root" "toolbox_ipc" "2770"
+		path_set_user_group_mode "/var/lib/toolbox/uipc/pubsub" "root" "toolbox_ipc" "2770"
 	fi
 
 	return 0

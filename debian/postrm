@@ -1,5 +1,13 @@
 #!/bin/sh
 
+remove_statoverride() {
+	path="$1"
+
+	if dpkg-statoverride --list "$path" >/dev/null 2>&1; then
+		dpkg-statoverride --remove "$path"
+	fi
+}
+
 main() {
 	action="$1"
 
@@ -8,13 +16,15 @@ main() {
 		return 0
 	fi
 
-	if dpkg-statoverride --list /var/lib/toolbox/ipc >/dev/null 2>&1; then
-		dpkg-statoverride --remove /var/lib/toolbox/ipc
-	fi
-
-	if dpkg-statoverride --list /var/lib/toolbox >/dev/null 2>&1; then
-		dpkg-statoverride --remove /var/lib/toolbox
-	fi
+	remove_statoverride "/var/lib/toolbox/uipc/pubsub"
+	remove_statoverride "/var/lib/toolbox/uipc/priv"
+	remove_statoverride "/var/lib/toolbox/uipc/pub"
+	remove_statoverride "/var/lib/toolbox/uipc"
+	remove_statoverride "/var/lib/toolbox/ipc/pubsub"
+	remove_statoverride "/var/lib/toolbox/ipc/priv"
+	remove_statoverride "/var/lib/toolbox/ipc/pub"
+	remove_statoverride "/var/lib/toolbox/ipc"
+	remove_statoverride "/var/lib/toolbox"
 
 	delgroup toolbox
 	delgroup toolbox_ipc
