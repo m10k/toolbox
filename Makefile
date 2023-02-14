@@ -14,8 +14,12 @@ clean:
 install:
 	mkdir -p $(DESTDIR)/$(PREFIX)/share/toolbox
 	mkdir -p $(DESTDIR)/$(PREFIX)/bin
-	mkdir -p $(DESTDIR)/var/lib/toolbox/ipc/{pub,priv,pubsub}
-	mkdir -p $(DESTDIR)/var/lib/toolbox/uipc/{pub,priv,pubsub}
+	mkdir -p $(DESTDIR)/var/lib/toolbox/ipc/pub
+	mkdir -p $(DESTDIR)/var/lib/toolbox/ipc/priv
+	mkdir -p $(DESTDIR)/var/lib/toolbox/ipc/pubsub
+	mkdir -p $(DESTDIR)/var/lib/toolbox/uipc/pub
+	mkdir -p $(DESTDIR)/var/lib/toolbox/uipc/priv
+	mkdir -p $(DESTDIR)/var/lib/toolbox/uipc/pubsub
 	chmod -R g+rwxs $(DESTDIR)/var/lib/toolbox/ipc
 	chmod -R g+rwxs $(DESTDIR)/var/lib/toolbox/uipc
 	cp toolbox.sh $(DESTDIR)/$(PREFIX)/share/toolbox/.
