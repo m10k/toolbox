@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # toolbox.sh - Framework for modular bash scripts
-# Copyright (C) 2021-2022 Matthias Kruk
+# Copyright (C) 2021-2023 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ __toolbox_init() {
 	declare -gxr TOOLBOX_PATH="$toolboxroot"
 	declare -gxr TOOLBOX_HOME="$HOME/.toolbox"
 	declare -axgr __TOOLBOX_MODULEPATH=(
+		${SHELLSPEC_PROJECT_ROOT:+"$SHELLSPEC_PROJECT_ROOT/test/include"}
 		"$scriptroot/include"
 		"$TOOLBOX_HOME/include"
 		"$toolboxroot/include"
