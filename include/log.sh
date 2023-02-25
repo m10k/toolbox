@@ -87,7 +87,8 @@ _log_write() {
 	local line
 
 	if (( __log_verbosity < level )); then
-		[[ $# == 2 ]] &&  IFS="" read -r -d ""
+		local drain
+		[[ $# == 2 ]] &&  IFS="" read -r -d "" drain
 		return 0
 	fi
 
