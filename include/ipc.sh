@@ -686,6 +686,9 @@ ipc_endpoint_publish() {
 	fi
 
 	while read -r subscriber; do
+		if [[ "$subscriber" == "$endpoint" ]]; then
+			continue
+		fi
 		ipc_endpoint_send "$endpoint" "$subscriber" "$message" "$topic"
 	done < <(_ipc_endpoint_topic_get_subscribers "$topic")
 
