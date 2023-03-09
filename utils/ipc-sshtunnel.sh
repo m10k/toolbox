@@ -164,7 +164,7 @@ main() {
 		exit 1
 	fi
 
-	if ! include "log" "opt" "inst" "ipc"; then
+	if ! include "log" "opt" "inst"; then
 		exit 1
 	fi
 
