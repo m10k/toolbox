@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ipc-sshtunnel.sh - Tunnel toolbox PubSub IPC messages over SSH
-# Copyright (C) 2022 Matthias Kruk
+# Copyright (C) 2022-2023 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,9 +45,10 @@ _array_add() {
 establish_ipc_tunnel() {
 	local direction="$1"
 	local remote="$2"
-	local -n ref_topics="$3"
-	local -n ref_tap_hooks="$4"
-	local -n ref_inject_hooks="$5"
+	local endpoint="$3"
+	local -n ref_topics="$4"
+	local -n ref_tap_hooks="$5"
+	local -n ref_inject_hooks="$6"
 
 	local proto
 	local topic
@@ -57,10 +58,12 @@ establish_ipc_tunnel() {
 
 	proto=$(opt_get "proto")
 	tap_args=(
-		--proto "$proto"
+		--proto    "$proto"
+		--endpoint "$endpoint"
 	)
 	inject_args=(
-		--proto "$proto"
+		--proto    "$proto"
+		--endpoint "$endpoint"
 	)
 
 	for topic in "${ref_topics[@]}"; do
@@ -102,13 +105,14 @@ process_is_running() {
 spawn_tunnel() {
 	local direction="$1"
 	local remote="$2"
-	local ref_topics="$3"
-	local ref_tap_hooks="$4"
-	local ref_inject_hooks="$5"
+	local endpoint="$3"
+	local ref_topics="$4"
+	local ref_tap_hooks="$5"
+	local ref_inject_hooks="$6"
 
 	local -i tunnel
 
-	if tunnel=$(establish_ipc_tunnel "$direction" "$remote" "$ref_topics" "$ref_tap_hooks" "$ref_inject_hooks"); then
+	if tunnel=$(establish_ipc_tunnel "$direction" "$remote" "$endpoint" "$ref_topics" "$ref_tap_hooks" "$ref_inject_hooks"); then
 		while inst_running && process_is_running "$tunnel"; do
 			sleep 5
 		done
@@ -127,6 +131,7 @@ main() {
 	declare -gxa tap_hooks
 	declare -gxa inject_hooks
 	local remote
+	local endpoint
 
 	input_topics=()
 	output_topics=()
@@ -149,10 +154,11 @@ main() {
 		return 1
 	fi
 
+	endpoint="ipc-sshtunnel-$HOSTNAME-$$"
 	remote=$(opt_get "remote")
 
-	if ! inst_start spawn_tunnel "in"  "$remote" input_topics  tap_hooks inject_hooks ||
-	   ! inst_start spawn_tunnel "out" "$remote" output_topics tap_hooks inject_hooks; then
+	if ! inst_start spawn_tunnel "in"  "$remote" "$endpoint" input_topics  tap_hooks inject_hooks ||
+	   ! inst_start spawn_tunnel "out" "$remote" "$endpoint" output_topics tap_hooks inject_hooks; then
 		return 1
 	fi
 

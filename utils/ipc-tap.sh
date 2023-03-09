@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ipc-tap.sh - Interceptor for toolbox IPC PubSub messages
-# Copyright (C) 2022 Matthias Kruk
+# Copyright (C) 2022-2023 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,7 +81,8 @@ invoke_hooks() {
 }
 
 tap_topics() {
-	local topics=("$@")
+	local endpoint_name="$1"
+	local topics=("${@:2}")
 
 	local endpoint
 	local topic
@@ -91,7 +92,7 @@ tap_topics() {
 	err=0
 	signal_received=0
 
-	if ! endpoint=$(ipc_endpoint_open); then
+	if ! endpoint=$(ipc_endpoint_open "$endpoint_name"); then
 		return 1
 	fi
 
@@ -136,23 +137,26 @@ tap_topics() {
 }
 
 main() {
+	local endpoint
 	local proto
 	local topics
 	declare -gA hooks
 
 	topics=()
 
-	opt_add_arg "t" "topic" "rv" ""            \
+	opt_add_arg "t" "topic"    "rv" ""         \
 	            "A topic to tap into"          \
 	            ''                             \
 	            add_topic
-	opt_add_arg "k" "hook"  "v"  ""            \
+	opt_add_arg "k" "hook"     "v"  ""         \
 	            "Hook to execute upon receipt" \
 	            '^[^:]+:.+$'                   \
 	            add_hook
-	opt_add_arg "p" "proto" "v"  "ipc"         \
+	opt_add_arg "p" "proto"    "v"  "ipc"      \
 	            "The IPC protocol to tap"      \
 	            '^u?ipc$'
+	opt_add_arg "e" "endpoint" "v"  ""         \
+	            "The IPC endpoint to use"
 
 	if ! opt_parse "$@"; then
 		return 1
@@ -163,7 +167,8 @@ main() {
 		return 1
 	fi
 
-	if ! tap_topics "${topics[@]}"; then
+	endpoint=$(opt_get "endpoint")
+	if ! tap_topics "$endpoint" "${topics[@]}"; then
 		return 1
 	fi
 

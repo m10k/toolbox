@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ipc-inject.sh - Injector for toolbox IPC PubSub messages
-# Copyright (C) 2022 Matthias Kruk
+# Copyright (C) 2022-2023 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -123,6 +123,7 @@ handle_message() {
 main() {
 	local proto
 	local endpoint
+	local endpoint_name
 	local message
 	declare -gA hooks
 	declare -gi signal_received
@@ -133,13 +134,15 @@ main() {
 
 	signal_received=0
 
-	opt_add_arg "k" "hook"  "v" ""               \
+	opt_add_arg "k" "hook"     "v" ""            \
 	            "Command for handling hook data" \
 	            '^[^:]+:.*$'                     \
 	            add_hook
-	opt_add_arg "p" "proto" "v" "ipc"            \
+	opt_add_arg "p" "proto"    "v" "ipc"         \
 		    "The IPC protocol to inject"     \
 		    '^u?ipc$'
+	opt_add_arg "e" "endpoint" "v" ""            \
+		    "The IPC endpoint to use"
 
 	if ! opt_parse "$@"; then
 		return 1
@@ -150,7 +153,8 @@ main() {
 		return 1
 	fi
 
-	if ! endpoint=$(ipc_endpoint_open); then
+	endpoint_name=$(opt_get "endpoint")
+	if ! endpoint=$(ipc_endpoint_open "$endpoint_name"); then
 		return 1
 	fi
 
