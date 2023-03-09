@@ -49,10 +49,19 @@ establish_ipc_tunnel() {
 	local -n ref_tap_hooks="$4"
 	local -n ref_inject_hooks="$5"
 
+	local proto
 	local topic
 	local hook
 	local tap_args
 	local inject_args
+
+	proto=$(opt_get "proto")
+	tap_args=(
+		--proto "$proto"
+	)
+	inject_args=(
+		--proto "$proto"
+	)
 
 	for topic in "${ref_topics[@]}"; do
 		tap_args+=(--topic "$topic")
@@ -124,15 +133,17 @@ main() {
 	tap_hooks=()
 	inject_hooks=()
 
-	opt_add_arg "i" "input-topic"  "v"  "" "Topic to relay from the remote side (may be used more than once)" \
+	opt_add_arg "i" "input-topic"  "v"  ""    "Topic to relay from the remote side (may be used more than once)" \
 	            "" _array_add
-	opt_add_arg "o" "output-topic" "v"  "" "Topic to relay to the remote side (may be used more than once)"   \
+	opt_add_arg "o" "output-topic" "v"  ""    "Topic to relay to the remote side (may be used more than once)"   \
 	            "" _array_add
-	opt_add_arg "T" "tap-hook"     "v"  "" "Hook to pass to ipc-tap"                                          \
+	opt_add_arg "T" "tap-hook"     "v"  ""    "Hook to pass to ipc-tap"                                          \
 	            "" _array_add
-	opt_add_arg "I" "inject-hook"  "v"  "" "Hook to pass to ipc-inject"                                       \
+	opt_add_arg "I" "inject-hook"  "v"  ""    "Hook to pass to ipc-inject"                                       \
 	            "" _array_add
-	opt_add_arg "r" "remote"       "rv" "" "Address of the remote side"
+	opt_add_arg "r" "remote"       "rv" ""    "Address of the remote side"
+	opt_add_arg "p" "proto"        "v"  "ipc" "The IPC protocol to tunnel"                                       \
+	            '^u?ipc$'
 
 	if ! opt_parse "$@"; then
 		return 1

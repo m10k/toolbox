@@ -121,6 +121,7 @@ handle_message() {
 }
 
 main() {
+	local proto
 	local endpoint
 	local message
 	declare -gA hooks
@@ -132,12 +133,20 @@ main() {
 
 	signal_received=0
 
-	opt_add_arg "k" "hook" "v" ""                \
+	opt_add_arg "k" "hook"  "v" ""               \
 	            "Command for handling hook data" \
 	            '^[^:]+:.*$'                     \
 	            add_hook
+	opt_add_arg "p" "proto" "v" "ipc"            \
+		    "The IPC protocol to inject"     \
+		    '^u?ipc$'
 
 	if ! opt_parse "$@"; then
+		return 1
+	fi
+
+	proto=$(opt_get "proto")
+	if ! include "$proto"; then
 		return 1
 	fi
 
@@ -163,7 +172,7 @@ main() {
 		exit 1
 	fi
 
-	if ! include "log" "opt" "ipc"; then
+	if ! include "log" "opt"; then
 		exit 1
 	fi
 

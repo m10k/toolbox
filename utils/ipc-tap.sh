@@ -136,6 +136,7 @@ tap_topics() {
 }
 
 main() {
+	local proto
 	local topics
 	declare -gA hooks
 
@@ -149,8 +150,16 @@ main() {
 	            "Hook to execute upon receipt" \
 	            '^[^:]+:.+$'                   \
 	            add_hook
+	opt_add_arg "p" "proto" "v"  "ipc"         \
+	            "The IPC protocol to tap"      \
+	            '^u?ipc$'
 
 	if ! opt_parse "$@"; then
+		return 1
+	fi
+
+	proto=$(opt_get "proto")
+	if ! include "$proto"; then
 		return 1
 	fi
 
@@ -166,7 +175,7 @@ main() {
 		exit 1
 	fi
 
-	if ! include "log" "opt" "ipc" "json"; then
+	if ! include "log" "opt" "json"; then
 		exit 1
 	fi
 
