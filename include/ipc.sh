@@ -654,7 +654,18 @@ _ipc_endpoint_topic_get_subscribers() {
 		fi
 
 		echo "$subscriber"
-	done < <(find "$(ipc_get_root)/pubsub/$topic" -mindepth 1 -maxdepth 1 -type l)
+	done < <(find "$(ipc_get_root)/pubsub/$topic" -mindepth 1 -maxdepth 1 -type l 2>/dev/null)
+
+	return 0
+}
+
+_ipc_endpoint_topic_get_subscribers_and_taps() {
+	local topic="$1"
+
+	{
+		_ipc_endpoint_topic_get_subscribers "$topic"
+		_ipc_endpoint_topic_get_subscribers "*"
+	} | sort | uniq
 
 	return 0
 }
@@ -690,7 +701,7 @@ ipc_endpoint_publish() {
 			continue
 		fi
 		ipc_endpoint_send "$endpoint" "$subscriber" "$message" "$topic"
-	done < <(_ipc_endpoint_topic_get_subscribers "$topic")
+	done < <(_ipc_endpoint_topic_get_subscribers_and_taps "$topic")
 
 	return 0
 }
