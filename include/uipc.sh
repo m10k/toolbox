@@ -74,7 +74,7 @@ uipc_msg_dump() {
 	local version_ok
 
 	version_ok="no"
-	version=$(_uipc_msg_get "$msg" "version")
+	version=$(ipc_msg_get_version "$msg" "version")
 
 	if _uipc_msg_version_supported "$msg"; then
 		version_ok="yes"
