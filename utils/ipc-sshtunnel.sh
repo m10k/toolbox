@@ -42,6 +42,23 @@ _array_add() {
 	return 0
 }
 
+ssh_escape() {
+	local remote="$1"
+	local args=("${@:2}")
+
+	local arg
+	local escaped_args
+
+	escaped_args=()
+
+	for arg in "${args[@]}"; do
+		escaped_args+=("\"$arg\"")
+	done
+
+	ssh "$remote" "${escaped_args[*]}"
+	return "$?"
+}
+
 establish_ipc_tunnel() {
 	local direction="$1"
 	local remote="$2"
@@ -80,10 +97,10 @@ establish_ipc_tunnel() {
 
 	case "$direction" in
 		"in")
-			( ssh -n "$remote" ipc-tap "${tap_args[@]}" | ipc-inject "${inject_args[@]}" ) &
+			( ssh_escape "$remote" ipc-tap "${tap_args[@]}" </dev/null | ipc-inject "${inject_args[@]}" ) &
 			;;
 		"out")
-			( ipc-tap "${tap_args[@]}" | ssh "$remote" ipc-inject "${inject_args[@]}" ) &
+			( ipc-tap "${tap_args[@]}" | ssh_escape "$remote" ipc-inject "${inject_args[@]}" ) &
 			;;
 		*)
 			log_error "Invalid direction: $direction"
