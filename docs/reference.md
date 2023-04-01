@@ -8,7 +8,7 @@ The following modules are part of toolbox.
 | [conf](conf.md)     | Configuration handling                   |
 | [git](git.md)       | Interacting with git repositories        |
 | [inst](inst.md)     | Writing daemons                          |
-| ipc                 | Message-based IPC (GPG-signed)           |
+| [ipc](ipc.md)       | Message-based IPC (GPG-signed)           |
 | [is](is.md)         | Checking the value of variables          |
 | [json](json.md)     | Handling JSON data                       |
 | [log](log.md)       | Logging and debugging                    |
@@ -16,5 +16,5 @@ The following modules are part of toolbox.
 | [opt](opt.md)       | Command line parsing                     |
 | [queue](queue.md)   | "Thread"-safe FIFOs                      |
 | [sem](sem.md)       | Process synchronization                  |
-| uipc                | Message-based IPC (unsigned)             |
+| [uipc](ipc.md)      | Message-based IPC (unsigned)             |
 | [wmutex](wmutex.md) | Weak (owner-less) locks                  |
