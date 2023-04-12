@@ -65,6 +65,17 @@ git_branch_get_current() {
 	return 0
 }
 
+git_branch_get_commits() {
+	local repository="$1"
+	local branch="$2"
+
+	if ! (cd "$repository" && git log --format="%H %aI %ae" "$branch" 2>/dev/null); then
+		return 1
+	fi
+
+	return 0
+}
+
 git_branch_checkout() {
 	local repository="$1"
 	local branch="$2"

@@ -15,6 +15,7 @@ repositories in the local file system.
 | [git_commit()](#git_commit)                         | Commit a change to the current branch |
 | [git_branch_new()](#git_branch_new)                 | Create a new branch                   |
 | [git_branch_get_current()](#git_branch_get_current) | Get the name of the current branch    |
+| [git_branch_get_commits()](#git_branch_get_commits) | List the commits in a branch |
 | [git_branch_checkout()](#git_branch_checkout)       | Change the current branch             |
 | [git_merge()](#git_merge)                           | Merge one branch into another one     |
 | [git_push()](#git_push)                             | Push a branch to a remote             |
@@ -162,6 +163,44 @@ no data is written to standard output.
 ### Standard error
 
 In case of an error, `git_branch_get_current()` will write an error message to standard error.
+
+## git_branch_get_commits()
+
+List the commits in a branch
+
+### Synopsis
+
+    git_branch_get_commits "$repository" "$branch"
+
+### Description
+
+The `git_branch_get_commits()` function lists the commits in the branch `branch` of the
+repository identified by `repository`. For each commit in the branch, it will write one
+line containing the commit hash, date, and email address of the committer to standard
+output.
+Commits are listed in reverse chronological order starting with the newest commit.
+
+### Return value
+
+| Return value | Meaning                             |
+|--------------|-------------------------------------|
+| 0            | Success                             |
+| 1            | Could not lookup the branch history |
+
+### Standard input
+
+This function does not read from standard input.
+
+### Standard output
+
+On success, all commits that are part of the branch will be written to standard output, one
+commit per line. Each line contains the commit hash, date, and committer email address,
+separated by single-width space characters. The date is output in strict ISO 8601 format.
+Commits are output in reverse chronological order starting with the newest commit.
+
+### Standard error
+
+This function does not write to standard error.
 
 
 ## git_branch_checkout()
