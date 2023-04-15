@@ -692,7 +692,7 @@ _ipc_endpoint_topic_get_subscribers_and_taps() {
 
 ipc_endpoint_subscribe() {
 	local endpoint="$1"
-	local topics="$2"
+	local topics=("${@:2}")
 
 	local topic
 	local -a succeeded
