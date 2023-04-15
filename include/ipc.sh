@@ -692,17 +692,29 @@ _ipc_endpoint_topic_get_subscribers_and_taps() {
 
 ipc_endpoint_subscribe() {
 	local endpoint="$1"
-	local topic="$2"
+	local topics="$2"
 
-	if ! _ipc_endpoint_topic_create "$topic"; then
-		return 1
+	local topic
+	local -a succeeded
+	local -i error
+
+	succeeded=()
+	error=0
+
+	for topic in "${topics[@]}"; do
+		if ! _ipc_endpoint_topic_create "$topic" ||
+		   ! _ipc_endpoint_topic_subscribe "$endpoint" "$topic"; then
+			error=1
+			break
+		fi
+		succeeded+=("$topic")
+	done
+
+	if (( error == 1 )); then
+		ipc_endpoint_unsubscribe "$endpoint" "${succeeded[@]}"
 	fi
 
-	if ! _ipc_endpoint_topic_subscribe "$endpoint" "$topic"; then
-		return 1
-	fi
-
-	return 0
+	return "$error"
 }
 
 ipc_endpoint_unsubscribe() {

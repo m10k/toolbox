@@ -26,7 +26,7 @@ sent by one module cannot be read by the other.
 | [ipc_endpoint_publish()](#ipc_endpoint_publish)                 | Publish a message to a topic                           |
 | [ipc_endpoint_recv()](#ipc_endpoint_recv)                       | Receive a point-to-point or pub-sub message            |
 | [ipc_endpoint_send()](#ipc_endpoint_send)                       | Send a point-to-point message to another endpoint      |
-| [ipc_endpoint_subscribe()](#ipc_endpoint_subscribe)             | Subscribe an endpoint to a topic                       |
+| [ipc_endpoint_subscribe()](#ipc_endpoint_subscribe)             | Subscribe an endpoint to one or more topics            |
 | [ipc_endpoint_unsubscribe()](#ipc_endpoint_unsubscribe)         | Unsubscribe an endpoint from one or more topics        |
 | [ipc_get_root()](#ipc_get_root)                                 | Return the path to the IPC directory                   |
 | [ipc_msg_dump()](#ipc_msg_dump)                                 | Dump the contents of an IPC message to standard output |
@@ -334,23 +334,26 @@ In case of an error, an error message will be written to standard error.
 
 ## ipc_endpoint_subscribe()
 
-Subscribe an endpoint to a topic
+Subscribe an endpoint to one or more topics
 
 ### Synopsis
 
-    ipc_endpoint_subscribe "$endpoint" "$topic"
+    ipc_endpoint_subscribe "$endpoint" "${topics[@]}"
 
 ### Description
 
-The `ipc_endpoint_subscribe()` function subscribes the endpoint referenced by `endpoint` to the topic
-`topic`. If the call succeeded, the endpoint will receive any messages published on the topic `topic`.
+The `ipc_endpoint_subscribe()` function subscribes the endpoint referenced by `endpoint` to
+the topics listed in `topics`. If the call succeeded, the endpoint will receive any messages
+published on any of the topics that were passed to this function. If any of the subscriptions
+failed, successful subscriptions will be undone, restoring the state the endpoint had before
+this function was invoked.
 
 ### Return value
 
-| Return value | Meaning                                           |
-|--------------|---------------------------------------------------|
-| 0            | Success                                           |
-| 1            | The endpoint could not be subscribed to the topic |
+| Return value | Meaning                                                    |
+|--------------|------------------------------------------------------------|
+| 0            | All topics were successfully subscribed                    |
+| 1            | The endpoint could not be subscribed to some of the topics |
 
 ### Standard input
 
