@@ -27,6 +27,7 @@ sent by one module cannot be read by the other.
 | [ipc_endpoint_recv()](#ipc_endpoint_recv)                       | Receive a point-to-point or pub-sub message            |
 | [ipc_endpoint_send()](#ipc_endpoint_send)                       | Send a point-to-point message to another endpoint      |
 | [ipc_endpoint_subscribe()](#ipc_endpoint_subscribe)             | Subscribe an endpoint to a topic                       |
+| [ipc_endpoint_unsubscribe()](#ipc_endpoint_unsubscribe)         | Unsubscribe an endpoint from one or more topics        |
 | [ipc_get_root()](#ipc_get_root)                                 | Return the path to the IPC directory                   |
 | [ipc_msg_dump()](#ipc_msg_dump)                                 | Dump the contents of an IPC message to standard output |
 | [ipc_msg_get()](#ipc_msg_get)                                   | Extract data from an IPC message                       |
@@ -350,6 +351,41 @@ The `ipc_endpoint_subscribe()` function subscribes the endpoint referenced by `e
 |--------------|---------------------------------------------------|
 | 0            | Success                                           |
 | 1            | The endpoint could not be subscribed to the topic |
+
+### Standard input
+
+This function does not read from standard input.
+
+### Standard output
+
+This function does not write to standard output.
+
+### Standard error
+
+In case of an error, an error message is written to standard error.
+
+
+## ipc_endpoint_unsubscribe()
+
+Unsubscribe an endpoint from one or more topics
+
+### Synopsis
+
+    ipc_endpoint_unsubscribe "$endpoint" "${topics[@]}"
+
+### Description
+
+The `ipc_endpoint_unsubscribe()` function unsubscribes the endpoint referenced by `endpoint` from the
+topics passed in `topics`. If the call succeeded, the endpoint will no longer receive messages that
+were published on any of the topics. However, the endpoint will still receive messages that were
+already in its queue at the time when the topic was unsubscribed.
+
+### Return value
+
+| Return value | Meaning                                                 |
+|--------------|---------------------------------------------------------|
+| 0            | All unsubscribe operations were successful              |
+| 1            | The endpoint could not be unsubscribed from some topics |
 
 ### Standard input
 

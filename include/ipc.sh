@@ -42,6 +42,7 @@ __init() {
 	          "endpoint_send"            \
 	          "endpoint_recv"            \
 	          "endpoint_subscribe"       \
+	          "endpoint_unsubscribe"     \
 	          "endpoint_publish"         \
 	          "endpoint_foreach_message" \
 
@@ -641,6 +642,25 @@ _ipc_endpoint_topic_subscribe() {
 	return 0
 }
 
+_ipc_endpoint_topic_unsubscribe() {
+	local endpoint="$1"
+	local topic="$2"
+
+	local root
+	local topicref
+	local endpointref
+
+	root=$(ipc_get_root)
+	topicref="$root/$endpoint/subscriptions/$topic"
+	endpointref="$root/pubsub/$topic/${endpoint//\//_}"
+
+	if ! rm -f "$topicref" "$endpointref"; then
+		return 1
+	fi
+
+	return 0
+}
+
 _ipc_endpoint_topic_get_subscribers() {
 	local topic="$1"
 
@@ -681,6 +701,21 @@ ipc_endpoint_subscribe() {
 	if ! _ipc_endpoint_topic_subscribe "$endpoint" "$topic"; then
 		return 1
 	fi
+
+	return 0
+}
+
+ipc_endpoint_unsubscribe() {
+	local endpoint="$1"
+	local topics=("${@:2}")
+
+	local topic
+
+	for topic in "${topics[@]}"; do
+		if ! _ipc_endpoint_topic_unsubscribe "$endpoint" "$topic"; then
+			return 1
+		fi
+	done
 
 	return 0
 }
