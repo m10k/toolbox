@@ -16,29 +16,30 @@ sent by one module cannot be read by the other.
 
 ### Function index
 
-| Function                                                        | Purpose                                                |
-|-----------------------------------------------------------------|--------------------------------------------------------|
-| [ipc_decode()](#ipc_decode)                                     | Decode an IPC message                                  |
-| [ipc_encode()](#ipc_encode)                                     | Encode an IPC message                                  |
-| [ipc_endpoint_close()](#ipc_endpoint_close)                     | Close an IPC endpoint                                  |
-| [ipc_endpoint_foreach_message()](#ipc_endpoint_foreach_message) | Iterate over an endpoint's message queue ]             |
-| [ipc_endpoint_open()](#ipc_endpoint_open)                       | Open an endpoint for IPC messaging                     |
-| [ipc_endpoint_publish()](#ipc_endpoint_publish)                 | Publish a message to a topic                           |
-| [ipc_endpoint_recv()](#ipc_endpoint_recv)                       | Receive a point-to-point or pub-sub message            |
-| [ipc_endpoint_send()](#ipc_endpoint_send)                       | Send a point-to-point message to another endpoint      |
-| [ipc_endpoint_subscribe()](#ipc_endpoint_subscribe)             | Subscribe an endpoint to one or more topics            |
-| [ipc_endpoint_unsubscribe()](#ipc_endpoint_unsubscribe)         | Unsubscribe an endpoint from one or more topics        |
-| [ipc_get_root()](#ipc_get_root)                                 | Return the path to the IPC directory                   |
-| [ipc_msg_dump()](#ipc_msg_dump)                                 | Dump the contents of an IPC message to standard output |
-| [ipc_msg_get()](#ipc_msg_get)                                   | Extract data from an IPC message                       |
-| [ipc_msg_get_data()](#ipc_msg_get_data)                         | Get the payload from a message                         |
-| [ipc_msg_get_destination()](#ipc_msg_get_destination)           | Get the address of a message's receiver                |
-| [ipc_msg_get_source()](#ipc_msg_get_source)                     | Get the address of a message's sender                  |
-| [ipc_msg_get_timestamp()](#ipc_msg_get_timestamp)               | Get the time when a message was sent                   |
-| [ipc_msg_get_topic()](#ipc_msg_get_topic)                       | Get the topic of a pub-sub message                     |
-| [ipc_msg_get_user()](#ipc_msg_get_user)                         | Get the user name of a message's sender                |
-| [ipc_msg_get_version()](#ipc_msg_get_version)                   | Get the protocol version of a message                  |
-| [ipc_msg_new()](#ipc_msg_new)                                   | Generate a new IPC message                             |
+| Function                                                            | Purpose                                                  |
+|---------------------------------------------------------------------|----------------------------------------------------------|
+| [ipc_decode()](#ipc_decode)                                         | Decode an IPC message                                    |
+| [ipc_encode()](#ipc_encode)                                         | Encode an IPC message                                    |
+| [ipc_endpoint_close()](#ipc_endpoint_close)                         | Close an IPC endpoint                                    |
+| [ipc_endpoint_foreach_message()](#ipc_endpoint_foreach_message)     | Iterate over an endpoint's message queue ]               |
+| [ipc_endpoint_get_subscriptions()](#ipc_endpoint_get_subscriptions) | Get the list of topics that an endpoint is subscribed to |
+| [ipc_endpoint_open()](#ipc_endpoint_open)                           | Open an endpoint for IPC messaging                       |
+| [ipc_endpoint_publish()](#ipc_endpoint_publish)                     | Publish a message to a topic                             |
+| [ipc_endpoint_recv()](#ipc_endpoint_recv)                           | Receive a point-to-point or pub-sub message              |
+| [ipc_endpoint_send()](#ipc_endpoint_send)                           | Send a point-to-point message to another endpoint        |
+| [ipc_endpoint_subscribe()](#ipc_endpoint_subscribe)                 | Subscribe an endpoint to one or more topics              |
+| [ipc_endpoint_unsubscribe()](#ipc_endpoint_unsubscribe)             | Unsubscribe an endpoint from one or more topics          |
+| [ipc_get_root()](#ipc_get_root)                                     | Return the path to the IPC directory                     |
+| [ipc_msg_dump()](#ipc_msg_dump)                                     | Dump the contents of an IPC message to standard output   |
+| [ipc_msg_get()](#ipc_msg_get)                                       | Extract data from an IPC message                         |
+| [ipc_msg_get_data()](#ipc_msg_get_data)                             | Get the payload from a message                           |
+| [ipc_msg_get_destination()](#ipc_msg_get_destination)               | Get the address of a message's receiver                  |
+| [ipc_msg_get_source()](#ipc_msg_get_source)                         | Get the address of a message's sender                    |
+| [ipc_msg_get_timestamp()](#ipc_msg_get_timestamp)                   | Get the time when a message was sent                     |
+| [ipc_msg_get_topic()](#ipc_msg_get_topic)                           | Get the topic of a pub-sub message                       |
+| [ipc_msg_get_user()](#ipc_msg_get_user)                             | Get the user name of a message's sender                  |
+| [ipc_msg_get_version()](#ipc_msg_get_version)                       | Get the protocol version of a message                    |
+| [ipc_msg_new()](#ipc_msg_new)                                       | Generate a new IPC message                               |
 
 
 ## ipc_decode()
@@ -192,6 +193,41 @@ This function does not write to standard output.
 ### Standard error
 
 This function does not write to standard error.
+
+
+## ipc_endpoint_get_subscriptions()
+
+Get the list of topics that an endpoint is subscribed to
+
+### Synopsis
+
+    ipc_endpoint_get_subscriptions "$endpoint"
+
+### Description
+
+The `ipc_endpoint_get_subscriptions()` function queries the topics that the endpoint
+referenced by `endpoint` is subscribed to and writes the topic names one per line to
+standard output.
+
+### Return value
+
+| Return value | Meaning         |
+|--------------|-----------------|
+| 0            | Always returned |
+
+### Standard input
+
+This function does not read from standard input.
+
+### Standard output
+
+The names of the topics that the endpoint is subscribed to are written to standard output,
+one topic per line.
+
+### Standard error
+
+In case of an error, a message indicating the error condition will be written to standard
+error.
 
 
 ## ipc_endpoint_open()

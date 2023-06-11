@@ -24,27 +24,28 @@ __init() {
 	declare -gxr  __ipc_root="/var/lib/toolbox/ipc"
 	declare -gxir __ipc_version=1
 
-	interface "get_root"                 \
-	          "msg_new"                  \
-	          "msg_get"                  \
-	          "msg_dump"                 \
-	          "msg_get_version"          \
-	          "msg_get_source"           \
-	          "msg_get_destination"      \
-	          "msg_get_user"             \
-	          "msg_get_timestamp"        \
-	          "msg_get_data"             \
-	          "msg_get_topic"            \
-	          "encode"                   \
-	          "decode"                   \
-	          "endpoint_open"            \
-	          "endpoint_close"           \
-	          "endpoint_send"            \
-	          "endpoint_recv"            \
-	          "endpoint_subscribe"       \
-	          "endpoint_unsubscribe"     \
-	          "endpoint_publish"         \
-	          "endpoint_foreach_message" \
+	interface "get_root"                   \
+	          "msg_new"                    \
+	          "msg_get"                    \
+	          "msg_dump"                   \
+	          "msg_get_version"            \
+	          "msg_get_source"             \
+	          "msg_get_destination"        \
+	          "msg_get_user"               \
+	          "msg_get_timestamp"          \
+	          "msg_get_data"               \
+	          "msg_get_topic"              \
+	          "encode"                     \
+	          "decode"                     \
+	          "endpoint_open"              \
+	          "endpoint_close"             \
+	          "endpoint_send"              \
+	          "endpoint_recv"              \
+	          "endpoint_subscribe"         \
+	          "endpoint_unsubscribe"       \
+	          "endpoint_get_subscriptions" \
+	          "endpoint_publish"           \
+	          "endpoint_foreach_message"   \
 
 	return 0
 }
@@ -730,6 +731,18 @@ ipc_endpoint_unsubscribe() {
 	done
 
 	return 0
+}
+
+ipc_endpoint_get_subscriptions() {
+        local endpoint="$1"
+
+        local subscription
+
+        while read -r subscription; do
+                printf '%s\n' "${subscription##*/}"
+        done < <(find "$(ipc_get_root)/$endpoint/subscriptions" -type l)
+
+        return 0
 }
 
 ipc_endpoint_publish() {
