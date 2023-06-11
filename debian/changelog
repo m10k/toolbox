@@ -1,3 +1,26 @@
+toolbox (0.3.6-1) unstable; urgency=medium
+
+  * Fixes
+    - debian: Correctly create IPC directories and set permissions
+    - log: Consume input on stdin to prevent SIGPIPE for producer
+    - ipc: Don't send pubsub messages to oneself
+    - utils: Make ipc-tap and ipc-inject use same endpoint to prevent
+             loops; properly escape command passed to ssh
+  * Improvements
+    - ipc: Declare interface so that the module can be extended; add
+           catchall-topic that receives all pubsub messages; add methods
+           for listing subscriptions and unsubscribing from topics; allow
+           multiple topics to be subscribed to or unsubscribed from in a
+           single function call
+    - uipc: Reimplement as extension of the ipc module; fix version check
+            when dumping messages
+    - utils: Add uipc support to ipc-sshtunnel and friends
+  * Features added
+    - toolbox: Add mechanism for module interfaces and inheritance
+
+ -- Matthias Kruk <m@m10k.eu>  Sun, 11 Jun 2023 14:14:38 +0900
+
+
 toolbox (0.3.5-1) unstable; urgency=medium
 
   * Fixes
