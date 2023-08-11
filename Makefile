@@ -25,11 +25,13 @@ install:
 	cp toolbox.sh $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	cp -r include $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	cp -r utils   $(DESTDIR)/$(PREFIX)/share/toolbox/.
+	cp -r spec    $(DESTDIR)/$(PREFIX)/share/toolbox/.
 	chown -R root:root $(DESTDIR)/$(PREFIX)/share/toolbox
 	find $(DESTDIR)/$(PREFIX)/share/toolbox -type d -exec chmod 755 {} \;
 	find $(DESTDIR)/$(PREFIX)/share/toolbox -type f -exec chmod 644 {} \;
 	chmod -R 755 $(DESTDIR)/$(PREFIX)/share/toolbox
 	ln -sf $(PREFIX)/share/toolbox/toolbox.sh $(DESTDIR)/$(PREFIX)/bin/toolbox.sh
+	ln -sf $(PREFIX)/share/toolbox/spec/validate.py $(DESTDIR)/$(PREFIX)/bin/toolbox-json-validate
 	ln -sf $(PREFIX)/share/toolbox/utils/ipc-tap.sh $(DESTDIR)/$(PREFIX)/bin/ipc-tap
 	ln -sf $(PREFIX)/share/toolbox/utils/ipc-inject.sh $(DESTDIR)/$(PREFIX)/bin/ipc-inject
 	ln -sf $(PREFIX)/share/toolbox/utils/ipc-sshtunnel.sh $(DESTDIR)/$(PREFIX)/bin/ipc-sshtunnel
