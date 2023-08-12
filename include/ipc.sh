@@ -35,6 +35,7 @@ __init() {
 	          "msg_get_timestamp"          \
 	          "msg_get_data"               \
 	          "msg_get_topic"              \
+	          "msg_validate_data"          \
 	          "encode"                     \
 	          "decode"                     \
 	          "endpoint_open"              \
@@ -46,6 +47,8 @@ __init() {
 	          "endpoint_get_subscriptions" \
 	          "endpoint_publish"           \
 	          "endpoint_foreach_message"   \
+	          "endpoint_set_data_schema"   \
+	          "endpoint_get_data_schema"
 
 	return 0
 }
@@ -441,6 +444,20 @@ ipc_msg_get_topic() {
 	return 0
 }
 
+ipc_msg_validate_data() {
+	local msg="$1"
+	local schema="$2"
+
+	local errors
+
+	if ! errors=$(toolbox-json-validate "$schema" <(ipc_msg_get_data "$msg") 2>&1); then
+		log_highlight "Invalid data in IPC message" <<< "$errors" | log_info
+		return 1
+	fi
+
+	return 0
+}
+
 ipc_msg_get_signature() {
 	local msg="$1"
 
@@ -600,11 +617,17 @@ ipc_endpoint_recv() {
 
 	local queue
 	local msg
+	local schema
 
 	queue="$(ipc_get_root)/$endpoint/queue"
 
 	if ! msg=$(queue_get "$queue" "$timeout"); then
 		return 1
+	fi
+
+	if schema=$(ipc_endpoint_get_data_schema "$endpoint") &&
+	   ! ipc_msg_validate_data "$msg" "$schema"; then
+		return 2
 	fi
 
 	echo "$msg"
@@ -787,6 +810,40 @@ ipc_endpoint_foreach_message() {
 
 	if ! queue_foreach "$queue" _ipc_endpoint_foreach_message_helper \
 	                   "$endpoint" "$func" "${args[@]}"; then
+		return 1
+	fi
+
+	return 0
+}
+
+ipc_endpoint_set_data_schema() {
+	local endpoint="$1"
+	local schema="$2"
+
+	local schema_file
+
+	schema_file="$(ipc_get_root)/$endpoint/schema"
+
+	if [[ -n "$schema" ]]; then
+		if ! printf '%s\n' "$schema" > "$schema_file"; then
+			log_info "Could not set data validation schema in $schema_file"
+			return 1
+		fi
+	elif ! rm -f "$schema_file"; then
+		return 2
+	fi
+
+	return 0
+}
+
+ipc_endpoint_get_data_schema() {
+	local endpoint="$1"
+
+	local schema_file
+
+	schema_file="$(ipc_get_root)/$endpoint/schema"
+
+	if ! cat "$schema_file" 2>/dev/null; then
 		return 1
 	fi
 

@@ -22,11 +22,13 @@ sent by one module cannot be read by the other.
 | [ipc_encode()](#ipc_encode)                                         | Encode an IPC message                                    |
 | [ipc_endpoint_close()](#ipc_endpoint_close)                         | Close an IPC endpoint                                    |
 | [ipc_endpoint_foreach_message()](#ipc_endpoint_foreach_message)     | Iterate over an endpoint's message queue ]               |
+| [ipc_endpoint_get_data_schema()](#ipc_endpoint_get_data_schema)     | Get the JSON Schema used to validate message data        |
 | [ipc_endpoint_get_subscriptions()](#ipc_endpoint_get_subscriptions) | Get the list of topics that an endpoint is subscribed to |
 | [ipc_endpoint_open()](#ipc_endpoint_open)                           | Open an endpoint for IPC messaging                       |
 | [ipc_endpoint_publish()](#ipc_endpoint_publish)                     | Publish a message to a topic                             |
 | [ipc_endpoint_recv()](#ipc_endpoint_recv)                           | Receive a point-to-point or pub-sub message              |
 | [ipc_endpoint_send()](#ipc_endpoint_send)                           | Send a point-to-point message to another endpoint        |
+| [ipc_endpoint_set_data_schema()](#ipc_endpoint_set_data_schema)     | Set the JSON Schema used to validate message data        |
 | [ipc_endpoint_subscribe()](#ipc_endpoint_subscribe)                 | Subscribe an endpoint to one or more topics              |
 | [ipc_endpoint_unsubscribe()](#ipc_endpoint_unsubscribe)             | Unsubscribe an endpoint from one or more topics          |
 | [ipc_get_root()](#ipc_get_root)                                     | Return the path to the IPC directory                     |
@@ -40,6 +42,7 @@ sent by one module cannot be read by the other.
 | [ipc_msg_get_user()](#ipc_msg_get_user)                             | Get the user name of a message's sender                  |
 | [ipc_msg_get_version()](#ipc_msg_get_version)                       | Get the protocol version of a message                    |
 | [ipc_msg_new()](#ipc_msg_new)                                       | Generate a new IPC message                               |
+| [ipc_msg_validate_data()](#ipc_msg_validate_data)                   | Use a JSON Schema to validate the data in a message      |
 
 
 ## ipc_decode()
@@ -195,6 +198,41 @@ This function does not write to standard output.
 This function does not write to standard error.
 
 
+## ipc_endpoint_get_data_schema()
+
+Get the JSON Schema used to validate message data
+
+### Synopsis
+
+    ipc_endpoint_get_data_schema "$endpoint"
+
+### Description
+
+The `ipc_endpoint_get_data_schema()` function writes the URL of the JSON Schema that is used to validate
+message data received by `endpoint` to standard output. If no schema was set, no data will be written to
+standard output and an error will be returned.
+
+### Return value
+
+| Return value | Meaning                                                     |
+|--------------|-------------------------------------------------------------|
+| 0            | The URL of the schema was written to standard output        |
+| 1            | The endpoint does not use a schema to validate message data |
+
+### Standard input
+
+This function does not read from standard input.
+
+### Standard output
+
+If a data validation schema is set in the endpoint, the URL of that schema will be written to
+standard output.
+
+### Standard error
+
+This function does not write to standard error.
+
+
 ## ipc_endpoint_get_subscriptions()
 
 Get the list of topics that an endpoint is subscribed to
@@ -315,12 +353,18 @@ endpoint, it will wait for up to `timeout` seconds. If `timeout` is zero, the fu
 return immediately without waiting for messages. If `timeout` was omitted, the function
 will wait indefinitely.
 
+If a message data validation schema was set using `ipc_endpoint_set_data_schema()`, data
+in incoming messages will be validated against that schema. If a received message contains
+data that could not be validated, the message will be dropped and `ipc_endpoint_recv()` will
+return an error.
+
 ### Return value
 
-| Return value | Meaning            |
-|--------------|--------------------|
-| 0            | Success            |
-| 1            | A timeout occurred |
+| Return value | Meaning                                       |
+|--------------|-----------------------------------------------|
+| 0            | Success                                       |
+| 1            | A timeout occurred                            |
+| 2            | A message containing invalid data was dropped |
 
 ### Standard input
 
@@ -366,6 +410,42 @@ This function does not write to standard output.
 ### Standard error
 
 In case of an error, an error message will be written to standard error.
+
+
+## ipc_endpoint_set_data_schema()
+
+Set the JSON Schema used to validate message data
+
+### Synopsis
+
+    ipc_endpoint_set_data_schema "$endpoint" "$schema"
+
+### Description
+
+The `ipc_endpoint_set_data_schema()` function enables message data validation in the endpoint
+`endpoint` and assigns it the JSON Schema referenced by `schema`. Any successive calls to
+`ipc_endpoint_recv()` will use the JSON Schema in `schema` to validate the data portion of
+incoming messages, and drop incoming messages if the data could not be validated.
+
+
+### Return value
+
+| Return value | Meaning                                         |
+|--------------|-------------------------------------------------|
+| 0            | The data validation schema was successfully set |
+| 1            | The data validation schema could not be set     |
+
+### Standard input
+
+This function does not read from standard input.
+
+### Standard output
+
+This function does not write to standard output.
+
+### Standard error
+
+In case of an error, an error message is written to standard error.
 
 
 ## ipc_endpoint_subscribe()
@@ -805,3 +885,36 @@ Upon success, the generated message is written to standard output.
 ### Standard error
 
 An error is written to standard error if the message could not be generated.
+
+
+## ipc_msg_validate_data()
+
+Use a JSON Schema to validate the data in a message
+
+### Synopsis
+
+    ipc_msg_validate_data "$message" "$schema"
+
+### Description
+
+The `ipc_msg_validate_data()` function validates the data contained in the
+message `message` using the JSON Schema referenced by `schema`.
+
+### Return value
+
+| Return value | Meaning                           |
+|--------------|-----------------------------------|
+| 0            | The message contains valid data   |
+| 1            | The message contains invalid data |
+
+### Standard input
+
+This function does not read from standard input.
+
+### Standard output
+
+This function does not write to standard output.
+
+### Standard error
+
+An error is written to standard error if the message data could not be validated.
