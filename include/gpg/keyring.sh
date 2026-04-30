@@ -89,7 +89,7 @@ gpg_keyring_export_key() {
 	local fingerprint
 
 	if ! fingerprint=$(gpg_keyring_get_key "$keyring" "$key"); then
-		return 1
+		fingerprint="$key"
 	fi
 
 	gpg_key_export "$__gpg_keyring_root/$keyring" "$fingerprint"
@@ -102,7 +102,7 @@ gpg_keyring_export_key_ascii() {
 	local fingerprint
 
 	if ! fingerprint=$(gpg_keyring_get_key "$keyring" "$key"); then
-		return 1
+		fingerprint="$key"
 	fi
 
 	gpg_key_export_ascii "$__gpg_keyring_root/$keyring" "$fingerprint"
