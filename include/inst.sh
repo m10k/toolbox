@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # inst.sh - Toolbox module for daemonized scripts
-# Copyright (C) 2021-2023 Matthias Kruk
+# Copyright (C) 2021-2026 Matthias Kruk
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,6 +42,10 @@ __init() {
 	opt_add_arg "s" "stop" "v" "" "Stop a running instance" '^[0-9]+$' _inst_handle_opt_stop
 
 	return 0
+}
+
+inst_get_command() {
+	printf '%s\n' "${__inst_name%.sh}"
 }
 
 _inst_handle_opt_stop() {
